@@ -17,7 +17,7 @@ public class JsonAuthLoginFilter extends AccessControlFilter {
     @Override
     protected boolean isAccessAllowed(ServletRequest request, ServletResponse response, Object mappedValue)
             throws Exception {
-        Subject subject = SecurityUtils.getSubject();
+        Subject subject = getSubject(request, response);
 
         if(null != subject){
             if(subject.isRemembered()){
@@ -28,7 +28,7 @@ public class JsonAuthLoginFilter extends AccessControlFilter {
             }
         }
 
-        return Boolean.FALSE ;
+        return Boolean.TRUE ;
     }
 
     @Override

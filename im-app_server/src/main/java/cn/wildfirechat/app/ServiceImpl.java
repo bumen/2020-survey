@@ -97,6 +97,7 @@ public class ServiceImpl implements Service {
         Subject subject = SecurityUtils.getSubject();
         // 在认证提交前准备 token（令牌）
         UsernamePasswordToken token = new UsernamePasswordToken(mobile, code);
+        token.setRememberMe(true);
         // 执行认证登陆
         try {
             subject.login(token);
@@ -178,6 +179,8 @@ public class ServiceImpl implements Service {
                     sendTextMessage(user.getUserId(), mIMConfig.welcome_for_back_user);
                 }
             }
+
+            subject.checkPermission("login");
 
             return RestResult.ok(response);
         } catch (Exception e) {

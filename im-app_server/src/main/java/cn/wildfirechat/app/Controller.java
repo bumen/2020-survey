@@ -22,6 +22,7 @@ public class Controller {
         return mService.sendCode(request.getMobile());
     }
 
+    @CrossOrigin
     @PostMapping(value = "/login", produces = "application/json;charset=UTF-8")
     public Object login(@RequestBody LoginRequest request) {
         return mService.login(request.getMobile(), request.getCode(), request.getClientId(), request.getPlatform() == null ? 0 : request.getPlatform());
@@ -48,11 +49,13 @@ public class Controller {
     1，扫码，调用/scan_pc接口。
     2，调用/confirm_pc 接口进行确认
      */
+    @CrossOrigin
     @PostMapping(value = "/scan_pc/{token}", produces = "application/json;charset=UTF-8")
     public Object scanPc(@PathVariable("token") String token) {
         return mService.scanPc(token);
     }
 
+    @CrossOrigin
     @PostMapping(value = "/confirm_pc", produces = "application/json;charset=UTF-8")
     public Object confirmPc(@RequestBody ConfirmSessionRequest request) {
         return mService.confirmPc(request);

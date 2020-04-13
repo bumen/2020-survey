@@ -23,6 +23,7 @@ public class PhoneCodeRealm extends AuthorizingRealm {
 //        stringSet.add("user:show");
 //        stringSet.add("user:admin");
 //        info.setStringPermissions(stringSet);
+        info.addStringPermission("login");
         return info;
     }
 
