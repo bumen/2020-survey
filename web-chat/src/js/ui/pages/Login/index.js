@@ -22,6 +22,7 @@ export default class Login extends Component {
     qrCodeTimer;
 
     lastToken;
+    userId;
 
     componentDidMount() {
         axios.defaults.baseURL = Config.APP_SERVER;
@@ -82,7 +83,7 @@ export default class Login extends Component {
 
     async login() {
         if (this.token === '' || this.lastToken === this.token) {
-            console.log('-------- token is empty or invalid');
+            console.log('-------- login token is empty or invalid');
             return;
         }
         var response = await axios.post('/session_login/' + this.token);
@@ -103,6 +104,86 @@ export default class Login extends Component {
         }
     }
 
+    async mobileLogin() {
+        var isLogin = wfc.isLogin();
+        if (isLogin) {
+            console.log("mobile is login success.");
+            return;
+        }
+
+        var response = await axios.post('/login', {
+            mobile: 18301009999,
+            code: 66666,
+            clientId: wfc.getClientId(),
+            platform: Config.getWFCPlatform()
+        });
+        console.log('----------- mobile login ok', response.data);
+        if (response.data) {
+            switch (response.data.code) {
+                case 0:
+                    this.userId = response.data.result.userId;
+
+                    alert("login success");
+                    console.log("mobile login success",response.data);
+                    break;
+                default:
+                    this.userId = '';
+                    console.log("mobile login fail",response.data);
+
+                    break
+            }
+        }
+    }
+
+    async scanPc() {
+        if (this.token === '') {
+            console.log('-------- scan pc token is empty or invalid');
+            return;
+        }
+        var response = await axios.post('/scan_pc/' + this.token);
+        console.log('---------- scan pc', response.data);
+        if (response.data) {
+            switch (response.data.code) {
+                case 0:
+                    alert("scan pc success");
+
+                    console.log("scan pc success", response.data);
+                    break;
+                default:
+                    console.log("scan pc fail", response.data);
+                    break
+            }
+        }
+    }
+
+    async confirmPc() {
+        if (!this.userId) {
+            console.log('-------- confirm pc userId is empty or invalid');
+            return;
+        }
+        if (this.token === '') {
+            console.log('-------- confirm pc token is empty or invalid');
+            return;
+        }
+        var response = await axios.post('/confirm_pc/', {
+            user_id: this.userId,
+            token: this.token
+        });
+        console.log('---------- confirm pc', response.data);
+        if (response.data) {
+            switch (response.data.code) {
+                case 0:
+                    alert("confirm pc success");
+
+                    console.log("confirm pc success ", response.data);
+                    break;
+                default:
+                    console.log("confirm pc fails", response.data);
+                    break
+            }
+        }
+    }
+
     renderCode() {
 
         return (
@@ -114,6 +195,11 @@ export default class Login extends Component {
                 <a href={window.location.pathname + '?' + +new Date()}>刷新二维码</a>
 
                 <p>扫码登录野火IM</p>
+
+
+                <a href="javascript:void(0);" onClick={e => this.mobileLogin()}>登录</a>&nbsp
+                <a href="javascript:void(0);" onClick={e => this.scanPc()}>扫码</a>&nbsp
+                <a href="javascript:void(0);" onClick={e => this.confirmPc()}>扫码确认</a>
             </div>
         );
     }
