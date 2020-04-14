@@ -97,7 +97,6 @@ public class ServiceImpl implements Service {
         Subject subject = SecurityUtils.getSubject();
         // 在认证提交前准备 token（令牌）
         UsernamePasswordToken token = new UsernamePasswordToken(mobile, code);
-        token.setRememberMe(true);
         // 执行认证登陆
         try {
             subject.login(token);
