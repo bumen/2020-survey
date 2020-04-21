@@ -1061,8 +1061,10 @@ export class WfcManager {
      * 初始化，请参考本demo的用法
      * @param {[]} args 请参考本demo的用法，第一个参数必须为marswrapper.node导出的对象
      */
-    init(args = []) {
-        impl.init(args);
+    init(clientId, mobile) {
+        Config.CLIENT_ID = clientId;
+        Config.CLIENT_MOBILE = mobile;
+        impl.init([]);
         avenginekit.setup(self);
     }
 

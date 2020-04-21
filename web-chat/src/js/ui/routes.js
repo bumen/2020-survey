@@ -2,7 +2,7 @@
 import React from 'react';
 import { withRouter, Route, Switch } from 'react-router-dom';
 
-import { Layout, Settings, Second, Home } from './pages';
+import { Layout, Settings, Second, Home, Members, AddMember } from './pages';
 
 const Main = withRouter(props => <Layout {...props} />);
 

@@ -112,7 +112,7 @@ export default class Login extends Component {
         }
 
         var response = await axios.post('/login', {
-            mobile: 18301009999,
+            mobile: Config.CLIENT_MOBILE,
             code: 66666,
             clientId: wfc.getClientId(),
             platform: Config.getWFCPlatform()

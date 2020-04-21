@@ -30,6 +30,9 @@ export default class Config {
     // 拉取最近2小时的消息
     static MESSAGE_ROAMING_HOUR_COUNT = 2;
 
+    static CLIENT_ID = 1;
+    static CLIENT_MOBILE = 2;
+
     static getWFCPlatform() {
         if (isElectron()) {
             if (window.process && window.process.platform === 'darwin') {
