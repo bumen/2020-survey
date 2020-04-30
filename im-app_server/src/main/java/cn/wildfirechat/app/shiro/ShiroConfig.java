@@ -1,17 +1,16 @@
 package cn.wildfirechat.app.shiro;
 
 
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import org.apache.shiro.mgt.SecurityManager;
-import org.apache.shiro.session.mgt.SessionManager;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 @Configuration
 public class ShiroConfig {
@@ -35,6 +34,7 @@ public class ShiroConfig {
         filterChainDefinitionMap.put("/session_login/**", "anon");
         filterChainDefinitionMap.put("/user/online_event", "anon");
         filterChainDefinitionMap.put("/logs/**", "anon");
+        filterChainDefinitionMap.put("/h2-console/**", "anon");
         filterChainDefinitionMap.put("/", "anon");
 
 

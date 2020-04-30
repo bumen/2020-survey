@@ -1,25 +1,44 @@
 package cn.wildfirechat.app;
 
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Optional;
+
+import javax.annotation.PostConstruct;
+
 import cn.wildfirechat.app.jpa.Announcement;
 import cn.wildfirechat.app.jpa.AnnouncementRepository;
 import cn.wildfirechat.app.model.PCSession;
-import cn.wildfirechat.app.pojo.*;
+import cn.wildfirechat.app.pojo.ConfirmSessionRequest;
+import cn.wildfirechat.app.pojo.CreateSessionRequest;
+import cn.wildfirechat.app.pojo.GroupAnnouncementPojo;
+import cn.wildfirechat.app.pojo.LoginResponse;
+import cn.wildfirechat.app.pojo.SessionOutput;
 import cn.wildfirechat.app.shiro.AuthDataSource;
 import cn.wildfirechat.app.shiro.TokenAuthenticationToken;
 import cn.wildfirechat.app.sms.SmsService;
-import cn.wildfirechat.app.tools.PhoneNumberUserNameGenerator;
 import cn.wildfirechat.app.tools.UUIDUserNameGenerator;
 import cn.wildfirechat.app.tools.Utils;
 import cn.wildfirechat.common.ErrorCode;
-import cn.wildfirechat.pojos.*;
+import cn.wildfirechat.pojos.Conversation;
+import cn.wildfirechat.pojos.InputOutputUserInfo;
+import cn.wildfirechat.pojos.MessagePayload;
+import cn.wildfirechat.pojos.OutputCreateUser;
+import cn.wildfirechat.pojos.OutputGetIMTokenData;
+import cn.wildfirechat.pojos.SendMessageResult;
 import cn.wildfirechat.proto.ProtoConstants;
 import cn.wildfirechat.sdk.ChatConfig;
 import cn.wildfirechat.sdk.MessageAdmin;
 import cn.wildfirechat.sdk.UserAdmin;
 import cn.wildfirechat.sdk.model.IMResult;
 import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.authc.*;
+import org.apache.shiro.authc.AuthenticationException;
+import org.apache.shiro.authc.ExcessiveAttemptsException;
+import org.apache.shiro.authc.IncorrectCredentialsException;
+import org.apache.shiro.authc.LockedAccountException;
+import org.apache.shiro.authc.UnknownAccountException;
+import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.subject.Subject;
 import org.json.JSONException;
 import org.slf4j.Logger;
@@ -29,12 +48,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.annotation.PostConstruct;
-import java.io.File;
-import java.io.IOException;
-import java.util.Optional;
-
-import static cn.wildfirechat.app.RestResult.RestCode.*;
+import static cn.wildfirechat.app.RestResult.RestCode.ERROR_GROUP_ANNOUNCEMENT_NOT_EXIST;
+import static cn.wildfirechat.app.RestResult.RestCode.ERROR_SERVER_ERROR;
+import static cn.wildfirechat.app.RestResult.RestCode.SUCCESS;
 
 @org.springframework.stereotype.Service
 public class ServiceImpl implements Service {
@@ -70,14 +86,15 @@ public class ServiceImpl implements Service {
     public RestResult sendCode(String mobile) {
         try {
             String code = Utils.getRandomCode(4);
-            RestResult.RestCode restCode = authDataSource.insertRecord(mobile, code);
+            // RestResult.RestCode restCode = authDataSource.insertRecord(mobile, code);
 
+            RestResult.RestCode restCode = SUCCESS;
             if (restCode != SUCCESS) {
                 return RestResult.error(restCode);
             }
 
 
-            restCode = smsService.sendCode(mobile, code);
+            //restCode = smsService.sendCode(mobile, code);
             if (restCode == RestResult.RestCode.SUCCESS) {
                 return RestResult.ok(restCode);
             } else {
@@ -171,11 +188,11 @@ public class ServiceImpl implements Service {
 
             if (isNewUser) {
                 if (!StringUtils.isEmpty(mIMConfig.welcome_for_new_user)) {
-                    sendTextMessage(user.getUserId(), mIMConfig.welcome_for_new_user);
+                   // sendTextMessage(user.getUserId(), mIMConfig.welcome_for_new_user);
                 }
             } else {
                 if (!StringUtils.isEmpty(mIMConfig.welcome_for_back_user)) {
-                    sendTextMessage(user.getUserId(), mIMConfig.welcome_for_back_user);
+                   // sendTextMessage(user.getUserId(), mIMConfig.welcome_for_back_user);
                 }
             }
 
