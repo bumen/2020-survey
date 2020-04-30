@@ -8,13 +8,17 @@
 
 package io.moquette.persistence;
 
-import io.moquette.persistence.remote.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import cn.wildfirechat.common.ErrorCode;
+import io.moquette.persistence.remote.RequestInfo;
 import io.moquette.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import cn.wildfirechat.common.ErrorCode;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class RPCCenter {
     private static final Logger LOG = LoggerFactory.getLogger(RPCCenter.class);
@@ -48,7 +52,7 @@ public class RPCCenter {
 
     protected RPCCenter() {}
 
-    public void sendRequest(String fromUser, String clientId, String request, byte[] message, String target, TargetEntry.Type type, Callback callback, boolean isAdmin) {
+    public void sendRequest(String fromUser, String clientId, String section, String request, byte[] message, String target, TargetEntry.Type type, Callback callback, boolean isAdmin) {
         int requestId = 0;
 
         if (callback != null) {
@@ -61,7 +65,7 @@ public class RPCCenter {
             requestMap.put(requestId, new RequestInfo(fromUser, clientId, callback, message, requestId, request));
         }
 
-        server.internalRpcMsg(fromUser, clientId, message, requestId, "", request, isAdmin);
+        server.internalRpcMsg(fromUser, clientId, section, message, requestId, "", request, isAdmin);
     }
 
     public void sendResponse(int errorCode, byte[] message, String toUuid, int requestId) {

@@ -20,7 +20,7 @@ import static cn.wildfirechat.common.ErrorCode.ERROR_CODE_SUCCESS;
 @Handler(IMTopic.ModifyGroupAliasTopic)
 public class ModifyGroupAliasHandler extends GroupHandler<WFCMessage.ModifyGroupMemberAlias> {
     @Override
-    public ErrorCode action(ByteBuf ackPayload, String clientID, String fromUser, boolean isAdmin, WFCMessage.ModifyGroupMemberAlias request, Qos1PublishHandler.IMCallback callback) {
+    public ErrorCode action(ByteBuf ackPayload, String clientID, String fromUser, String section, boolean isAdmin, WFCMessage.ModifyGroupMemberAlias request, Qos1PublishHandler.IMCallback callback) {
         ErrorCode errorCode = m_messagesStore.modifyGroupAlias(fromUser, request.getGroupId(), request.getAlias());
         if (errorCode == ERROR_CODE_SUCCESS && request.hasNotifyContent()) {
             if (request.hasNotifyContent()&& request.getNotifyContent().getType() > 0) {

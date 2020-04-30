@@ -25,7 +25,7 @@ import static cn.wildfirechat.proto.ProtoConstants.ContentType.Text;
 @Handler(value = IMTopic.BroadcastMessageTopic)
 public class BroadcastMessageHandler extends IMHandler<WFCMessage.Message> {
     @Override
-    public ErrorCode action(ByteBuf ackPayload, String clientID, String fromUser, boolean isAdmin, WFCMessage.Message message, Qos1PublishHandler.IMCallback callback) {
+    public ErrorCode action(ByteBuf ackPayload, String clientID, String fromUser, String section, boolean isAdmin, WFCMessage.Message message, Qos1PublishHandler.IMCallback callback) {
         ErrorCode errorCode = ErrorCode.ERROR_CODE_SUCCESS;
         if (message != null) {
             if (!isAdmin) {  //only admin can broadcast message

@@ -16,41 +16,26 @@
 
 package io.moquette.spi.impl;
 
-import static io.moquette.spi.impl.Utils.readBytesAndRewind;
-import static io.netty.handler.codec.mqtt.MqttMessageIdVariableHeader.from;
-import static io.netty.handler.codec.mqtt.MqttQoS.AT_MOST_ONCE;
-import static cn.wildfirechat.common.ErrorCode.ERROR_CODE_NOT_IMPLEMENT;
-import static cn.wildfirechat.common.ErrorCode.ERROR_CODE_OVER_FREQUENCY;
-import static cn.wildfirechat.common.ErrorCode.ERROR_CODE_SUCCESS;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.zip.GZIPOutputStream;
 
-import cn.wildfirechat.server.ThreadPoolExecutorWrapper;
-import com.google.gson.Gson;
-import com.xiaoleilu.loServer.RestResult;
-import com.xiaoleilu.loServer.action.ClassUtil;
+import cn.wildfirechat.common.ErrorCode;
 import cn.wildfirechat.pojos.OutputCheckUserOnline;
-import io.moquette.persistence.RPCCenter;
+import cn.wildfirechat.server.ThreadPoolExecutorWrapper;
 import io.moquette.imhandler.Handler;
 import io.moquette.imhandler.IMHandler;
 import io.moquette.persistence.MemorySessionStore;
+import io.moquette.persistence.RPCCenter;
 import io.moquette.server.ConnectionDescriptor;
-import io.moquette.server.Server;
-import io.moquette.spi.ClientSession;
-import io.moquette.spi.impl.security.AES;
-import io.netty.handler.codec.mqtt.MqttVersion;
-import io.netty.util.ReferenceCountUtil;
-import io.netty.util.internal.StringUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import io.moquette.server.ConnectionDescriptorStore;
+import io.moquette.server.Server;
 import io.moquette.server.netty.NettyUtils;
 import io.moquette.spi.IMessagesStore;
 import io.moquette.spi.ISessionsStore;
+import io.moquette.spi.impl.security.AES;
 import io.moquette.spi.impl.subscriptions.Topic;
 import io.moquette.spi.security.IAuthorizator;
 import io.netty.buffer.ByteBuf;
@@ -59,11 +44,25 @@ import io.netty.channel.Channel;
 import io.netty.handler.codec.mqtt.MqttFixedHeader;
 import io.netty.handler.codec.mqtt.MqttMessageType;
 import io.netty.handler.codec.mqtt.MqttPublishMessage;
-import cn.wildfirechat.common.ErrorCode;
+import io.netty.handler.codec.mqtt.MqttVersion;
+import io.netty.util.ReferenceCountUtil;
+import io.netty.util.internal.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import win.liyufan.im.IMTopic;
 import win.liyufan.im.RateLimiter;
 import win.liyufan.im.Utility;
 import win.liyufan.im.extended.mqttmessage.ModifiedMqttPubAckMessage;
+
+import static cn.wildfirechat.common.ErrorCode.ERROR_CODE_NOT_IMPLEMENT;
+import static cn.wildfirechat.common.ErrorCode.ERROR_CODE_OVER_FREQUENCY;
+import static cn.wildfirechat.common.ErrorCode.ERROR_CODE_SUCCESS;
+import static io.moquette.spi.impl.Utils.readBytesAndRewind;
+import static io.netty.handler.codec.mqtt.MqttMessageIdVariableHeader.from;
+import static io.netty.handler.codec.mqtt.MqttQoS.AT_MOST_ONCE;
+
+import com.google.gson.Gson;
+import com.xiaoleilu.loServer.action.ClassUtil;
 
 public class Qos1PublishHandler extends QosPublishHandler {
     private static final Logger LOG = LoggerFactory.getLogger(Qos1PublishHandler.class);
@@ -108,11 +107,11 @@ public class Qos1PublishHandler extends QosPublishHandler {
         }
     }
 
-    public void onRpcMsg(String fromUser, String clientId, byte[] message, int requestId, String from, String request, boolean isAdmin) {
+    public void onRpcMsg(String fromUser, String clientId, String section, byte[] message, int requestId, String from, String request, boolean isAdmin) {
         if (request.equals(RPCCenter.CHECK_USER_ONLINE_REQUEST)) {
             checkUserOnlineHandler(message, ackPayload -> RPCCenter.getInstance().sendResponse(ERROR_CODE_SUCCESS.getCode(), ackPayload, from, requestId));
         } else {
-            imHandler(clientId, fromUser, request, message, (errorCode, ackPayload) -> {
+            imHandler(clientId, fromUser, section, request, message, (errorCode, ackPayload) -> {
                 if (requestId > 0) {
                     byte[] response = new byte[ackPayload.readableBytes()];
                     ackPayload.readBytes(response);
@@ -150,7 +149,7 @@ public class Qos1PublishHandler extends QosPublishHandler {
         });
     }
 
-	void imHandler(String clientID, String fromUser, String topic, byte[] payloadContent, IMCallback callback, boolean isAdmin) {
+	void imHandler(String clientID, String fromUser, String section, String topic, byte[] payloadContent, IMCallback callback, boolean isAdmin) {
         LOG.info("imHandler fromUser={}, topic={}", fromUser, topic);
         if(!mLimitCounter.isGranted(clientID + fromUser + topic)) {
             ByteBuf ackPayload = Unpooled.buffer();
@@ -219,7 +218,7 @@ public class Qos1PublishHandler extends QosPublishHandler {
 
         IMHandler handler = m_imHandlers.get(topic);
         if (handler != null) {
-            handler.doHandler(clientID, fromUser, topic, payloadContent, wrapper, isAdmin);
+            handler.doHandler(clientID, fromUser, section, topic, payloadContent, wrapper, isAdmin);
         } else {
             LOG.error("imHandler unknown topic={}", topic);
             ByteBuf ackPayload = Unpooled.buffer();
@@ -258,7 +257,7 @@ public class Qos1PublishHandler extends QosPublishHandler {
         byte[] payloadContent = readBytesAndRewind(payload);
         MemorySessionStore.Session session = m_sessionStore.getSession(clientID);
         payloadContent = AES.AESDecrypt(payloadContent, session.getSecret(), true);
-        imHandler(clientID, username, imtopic, payloadContent, (errorCode, ackPayload) -> sendPubAck(clientID, messageID, ackPayload, errorCode), false);
+        imHandler(clientID, username, session.getSection(), imtopic, payloadContent, (errorCode, ackPayload) -> sendPubAck(clientID, messageID, ackPayload, errorCode), false);
     }
 
     private void sendPubAck(String clientId, int messageID, ByteBuf payload, ErrorCode errorCode) {

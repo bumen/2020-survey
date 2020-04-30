@@ -20,14 +20,13 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import io.moquette.BrokerConstants;
 import io.moquette.interception.InterceptHandler;
 import io.moquette.server.ConnectionDescriptorStore;
 import io.moquette.server.Server;
 import io.moquette.server.config.IConfig;
+import io.moquette.service.ArenaMessageService;
+import io.moquette.service.WorldMessageService;
 import io.moquette.spi.IMessagesStore;
 import io.moquette.spi.ISessionsStore;
 import io.moquette.spi.IStore;
@@ -35,6 +34,8 @@ import io.moquette.spi.impl.security.PermitAllAuthorizator;
 import io.moquette.spi.impl.security.TokenAuthenticator;
 import io.moquette.spi.security.IAuthenticator;
 import io.moquette.spi.security.IAuthorizator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * It's main responsibility is bootstrap the ProtocolProcessor.
@@ -74,7 +75,7 @@ public class ProtocolProcessorBootstrapper {
      * @return the processor created for the broker.
      */
     public ProtocolProcessor init(IConfig props, List<? extends InterceptHandler> embeddedObservers,
-            IAuthenticator authenticator, IAuthorizator authorizator, Server server, IStore store) {
+        IAuthenticator authenticator, IAuthorizator authorizator, Server server, IStore store) {
         IMessagesStore messagesStore;
         messagesStore = store.messagesStore();
         m_sessionsStore = store.sessionsStore();
@@ -88,9 +89,11 @@ public class ProtocolProcessorBootstrapper {
         LOG.info("Configuring message interceptors...");
 
         List<InterceptHandler> observers = new ArrayList<>(embeddedObservers);
-        String interceptorClassName = props.getProperty(BrokerConstants.INTERCEPT_HANDLER_PROPERTY_NAME);
+        String interceptorClassName = props
+            .getProperty(BrokerConstants.INTERCEPT_HANDLER_PROPERTY_NAME);
         if (interceptorClassName != null && !interceptorClassName.isEmpty()) {
-            InterceptHandler handler = loadClass(interceptorClassName, InterceptHandler.class, Server.class, server);
+            InterceptHandler handler = loadClass(interceptorClassName, InterceptHandler.class,
+                Server.class, server);
             if (handler != null) {
                 observers.add(handler);
             }
@@ -99,12 +102,13 @@ public class ProtocolProcessorBootstrapper {
 
         LOG.info("Configuring MQTT authenticator...");
         authenticator = new TokenAuthenticator();
-        
 
         LOG.info("Configuring MQTT authorizator...");
-        String authorizatorClassName = props.getProperty(BrokerConstants.AUTHORIZATOR_CLASS_NAME, "");
+        String authorizatorClassName = props
+            .getProperty(BrokerConstants.AUTHORIZATOR_CLASS_NAME, "");
         if (authorizator == null && !authorizatorClassName.isEmpty()) {
-            authorizator = loadClass(authorizatorClassName, IAuthorizator.class, IConfig.class, props);
+            authorizator = loadClass(authorizatorClassName, IAuthorizator.class, IConfig.class,
+                props);
         }
 
         if (authorizator == null) {
@@ -116,39 +120,48 @@ public class ProtocolProcessorBootstrapper {
         connectionDescriptors = new ConnectionDescriptorStore(m_sessionsStore);
 
         LOG.info("Initializing MQTT protocol processor...");
-        m_processor.init(connectionDescriptors, messagesStore, m_sessionsStore, authenticator, authorizator, interceptor, server);
+        m_processor.init(connectionDescriptors, messagesStore, m_sessionsStore, authenticator,
+            authorizator, interceptor, server);
+
+        WorldMessageService.INSTANCE.init(server);
+        ArenaMessageService.INSTANCE.init(server);
+
         return m_processor;
     }
 
     @SuppressWarnings("unchecked")
-    private <T, U> T loadClass(String className, Class<T> intrface, Class<U> constructorArgClass, U props) {
+    private <T, U> T loadClass(String className, Class<T> intrface, Class<U> constructorArgClass,
+        U props) {
         T instance = null;
         try {
             // check if constructor with constructor arg class parameter
             // exists
             LOG.info("Invoking constructor with {} argument. ClassName={}, interfaceName={}",
-                    constructorArgClass.getName(), className, intrface.getName());
+                constructorArgClass.getName(), className, intrface.getName());
             instance = this.getClass().getClassLoader()
                 .loadClass(className)
                 .asSubclass(intrface)
                 .getConstructor(constructorArgClass)
                 .newInstance(props);
         } catch (InstantiationException | IllegalAccessException | ClassNotFoundException ex) {
-            LOG.warn("Unable to invoke constructor with {} argument. ClassName={}, interfaceName={}, cause={}, errorMessage={}",
-                    constructorArgClass.getName(), className, intrface.getName(), ex.getCause(), ex.getMessage());
+            LOG.warn(
+                "Unable to invoke constructor with {} argument. ClassName={}, interfaceName={}, cause={}, errorMessage={}",
+                constructorArgClass.getName(), className, intrface.getName(), ex.getCause(),
+                ex.getMessage());
             return null;
         } catch (NoSuchMethodException | InvocationTargetException e) {
             try {
                 LOG.info("Invoking default constructor. ClassName={}, interfaceName={}",
-                        className, intrface.getName());
+                    className, intrface.getName());
                 // fallback to default constructor
                 instance = this.getClass().getClassLoader()
                     .loadClass(className)
                     .asSubclass(intrface)
                     .newInstance();
             } catch (InstantiationException | IllegalAccessException | ClassNotFoundException ex) {
-                LOG.error("Unable to invoke default constructor. ClassName={}, interfaceName={}, cause={}, errorMessage={}",
-                        className, intrface.getName(), ex.getCause(), ex.getMessage());
+                LOG.error(
+                    "Unable to invoke default constructor. ClassName={}, interfaceName={}, cause={}, errorMessage={}",
+                    className, intrface.getName(), ex.getCause(), ex.getMessage());
                 return null;
             }
         }
@@ -161,12 +174,13 @@ public class ProtocolProcessorBootstrapper {
     }
 
     public void shutdown() {
-        if (storeShutdown != null)
+        if (storeShutdown != null) {
             storeShutdown.run();
-        if (m_processor != null)
-            m_processor.shutdown();
-//        if (m_interceptor != null)
-//            m_interceptor.stop();
+        }
+
+        m_processor.shutdown();
+
+        WorldMessageService.INSTANCE.shutdown();
     }
 
     public ConnectionDescriptorStore getConnectionDescriptors() {

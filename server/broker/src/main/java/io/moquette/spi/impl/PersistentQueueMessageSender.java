@@ -16,17 +16,11 @@
 
 package io.moquette.spi.impl;
 
-import cn.wildfirechat.proto.WFCMessage;
-import cn.wildfirechat.push.PushMessage;
-import cn.wildfirechat.push.PushServer;
 import io.moquette.server.ConnectionDescriptorStore;
 import io.moquette.spi.ClientSession;
 import io.netty.handler.codec.mqtt.MqttPublishMessage;
-import io.netty.handler.codec.mqtt.MqttQoS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import static io.moquette.spi.impl.ProtocolProcessor.asStoredMessage;
-import static io.netty.handler.codec.mqtt.MqttQoS.AT_MOST_ONCE;
 
 class PersistentQueueMessageSender {
 
@@ -37,22 +31,58 @@ class PersistentQueueMessageSender {
         this.connectionDescriptorStore = connectionDescriptorStore;
     }
 
+    /**
+     * 不使用推送服务
+     * @param sender
+     * @param conversationType
+     * @param target
+     * @param line
+     * @param messageHead
+     * @param deviceId
+     * @param pushContent
+     * @param messageContentType
+     * @param serverTime
+     * @param senderName
+     * @param targetName
+     * @param unReceivedMsg
+     * @param mentionType
+     * @param isHiddenDetail
+     * @param language
+     */
+    @Deprecated
     void sendPush(String sender, int conversationType, String target, int line, long messageHead, String deviceId, String pushContent, int messageContentType, long serverTime, String senderName, String targetName, int unReceivedMsg, int mentionType, boolean isHiddenDetail, String language) {
         LOG.info("Send push to {}, message from {}", deviceId, sender);
-        PushMessage pushMessage = new PushMessage(sender, conversationType, target, line, messageContentType, serverTime, senderName, targetName, unReceivedMsg, mentionType, isHiddenDetail, language);
-        pushMessage.pushContent = pushContent;
-        PushServer.getServer().pushMessage(pushMessage, deviceId, pushContent);
+        // PushMessage pushMessage = new PushMessage(sender, conversationType, target, line, messageContentType, serverTime, senderName, targetName, unReceivedMsg, mentionType, isHiddenDetail, language);
+        // pushMessage.pushContent = pushContent;
+        // PushServer.getServer().pushMessage(pushMessage, deviceId, pushContent);
     }
 
+    /**
+     * 不使用推送服务
+     * @param sender
+     * @param target
+     * @param deviceId
+     * @param pushContent
+     * @param pushContentType
+     * @param serverTime
+     * @param senderName
+     * @param unReceivedMsg
+     * @param language
+     */
+    @Deprecated
     void sendPush(String sender, String target, String deviceId, String pushContent, int pushContentType, long serverTime, String senderName, int unReceivedMsg, String language) {
         LOG.info("Send push to {}, message from {}", deviceId, sender);
-        PushMessage pushMessage = new PushMessage(sender, target, serverTime, senderName, unReceivedMsg, language, pushContentType);
-        pushMessage.pushContent = pushContent;
-        PushServer.getServer().pushMessage(pushMessage, deviceId, pushContent);
+        // PushMessage pushMessage = new PushMessage(sender, target, serverTime, senderName, unReceivedMsg, language, pushContentType);
+        // pushMessage.pushContent = pushContent;
+        // PushServer.getServer().pushMessage(pushMessage, deviceId, pushContent);
     }
 
     boolean sendPublish(ClientSession clientsession, MqttPublishMessage pubMessage) {
         String clientId = clientsession.clientID;
+        return sendPublish(clientId, pubMessage);
+    }
+
+    boolean sendPublish(String clientId, MqttPublishMessage pubMessage) {
         final int messageId = pubMessage.variableHeader().packetId();
         final String topicName = pubMessage.variableHeader().topicName();
         if (LOG.isDebugEnabled()) {

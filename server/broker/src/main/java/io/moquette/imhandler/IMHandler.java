@@ -8,26 +8,6 @@
 
 package io.moquette.imhandler;
 
-import cn.wildfirechat.proto.ProtoConstants;
-import cn.wildfirechat.proto.WFCMessage;
-import cn.wildfirechat.server.ThreadPoolExecutorWrapper;
-import com.google.gson.Gson;
-import com.google.protobuf.GeneratedMessage;
-import com.google.protobuf.InvalidProtocolBufferException;
-import io.moquette.server.Server;
-import io.moquette.spi.IMessagesStore;
-import io.moquette.spi.ISessionsStore;
-import io.moquette.spi.impl.MessagesPublisher;
-import io.moquette.spi.impl.Qos1PublishHandler;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
-import io.netty.util.internal.StringUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import cn.wildfirechat.common.ErrorCode;
-import win.liyufan.im.RateLimiter;
-import win.liyufan.im.Utility;
-
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.InvocationTargetException;
@@ -39,8 +19,29 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import cn.wildfirechat.common.ErrorCode;
+import cn.wildfirechat.log.Logs;
+import cn.wildfirechat.proto.ProtoConstants;
+import cn.wildfirechat.proto.WFCMessage;
+import cn.wildfirechat.server.ThreadPoolExecutorWrapper;
+import io.moquette.server.Server;
+import io.moquette.spi.IMessagesStore;
+import io.moquette.spi.ISessionsStore;
+import io.moquette.spi.impl.MessagesPublisher;
+import io.moquette.spi.impl.Qos1PublishHandler;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.util.internal.StringUtil;
+import org.slf4j.Logger;
+import win.liyufan.im.RateLimiter;
+import win.liyufan.im.Utility;
+
 import static cn.wildfirechat.common.ErrorCode.ERROR_CODE_OVER_FREQUENCY;
 import static cn.wildfirechat.common.ErrorCode.ERROR_CODE_SUCCESS;
+
+import com.google.gson.Gson;
+import com.google.protobuf.GeneratedMessage;
+import com.google.protobuf.InvalidProtocolBufferException;
 
 /**
  * 请求处理接口<br>
@@ -49,7 +50,7 @@ import static cn.wildfirechat.common.ErrorCode.ERROR_CODE_SUCCESS;
  */
 
 abstract public class IMHandler<T> {
-    protected static final Logger LOG = LoggerFactory.getLogger(IMHandler.class);
+    protected static final Logger LOG = Logs.MQTT;
     protected static IMessagesStore m_messagesStore = null;
     protected static ISessionsStore m_sessionsStore = null;
     protected static Server mServer = null;
@@ -169,7 +170,7 @@ abstract public class IMHandler<T> {
         return ErrorCode.ERROR_CODE_SUCCESS;
     }
 
-	public void doHandler(String clientID, String fromUser, String topic, byte[] payloadContent, Qos1PublishHandler.IMCallback callback, boolean isAdmin) {
+	public void doHandler(String clientID, String fromUser, String section, String topic, byte[] payloadContent, Qos1PublishHandler.IMCallback callback, boolean isAdmin) {
         m_imBusinessExecutor.execute(() -> {
             Qos1PublishHandler.IMCallback callbackWrapper = new Qos1PublishHandler.IMCallback() {
                 @Override
@@ -189,7 +190,7 @@ abstract public class IMHandler<T> {
 
                 try {
                     LOG.debug("execute handler for topic {}", topic);
-                    errorCode = action(ackPayload, clientID, fromUser, isAdmin, getDataObject(payloadContent), callbackWrapper);
+                    errorCode = action(ackPayload, clientID, fromUser, section, isAdmin, getDataObject(payloadContent), callbackWrapper);
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();
                     Utility.printExecption(LOG, e);
@@ -230,7 +231,7 @@ abstract public class IMHandler<T> {
 
 
     @ActionMethod
-    abstract public ErrorCode action(ByteBuf ackPayload, String clientID, String fromUser, boolean isAdmin, T request, Qos1PublishHandler.IMCallback callback)   ;
+    abstract public ErrorCode action(ByteBuf ackPayload, String clientID, String fromUser, String section, boolean isAdmin, T request, Qos1PublishHandler.IMCallback callback)   ;
 
     public void afterAction(String clientID, String fromUser, String topic, Qos1PublishHandler.IMCallback callback) {
 

@@ -2,7 +2,6 @@ package io.moquette.spi.security;
 
 
 import com.hazelcast.util.StringUtil;
-import io.moquette.spi.impl.security.AES;
 
 public class Tokenor {
 	private static String KEY = "testim";
@@ -20,8 +19,9 @@ public class Tokenor {
 
     public static String getUserId(byte[] password) {
         try {
+            String pwd = new String(password);
             String signKey =
-                DES.decryptDES(new String(password));
+                DES.decryptDES(pwd);
 
             if (signKey.startsWith(KEY + "|")) {
                 signKey = signKey.substring(KEY.length() + 1);

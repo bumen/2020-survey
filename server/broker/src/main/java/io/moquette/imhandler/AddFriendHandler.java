@@ -21,7 +21,7 @@ import static win.liyufan.im.IMTopic.HandleFriendRequestTopic;
 @Handler(IMTopic.AddFriendRequestTopic)
 public class AddFriendHandler extends GroupHandler<WFCMessage.AddFriendRequest> {
     @Override
-    public ErrorCode action(ByteBuf ackPayload, String clientID, String fromUser, boolean isAdmin, WFCMessage.AddFriendRequest request, Qos1PublishHandler.IMCallback callback) {
+    public ErrorCode action(ByteBuf ackPayload, String clientID, String fromUser, String section, boolean isAdmin, WFCMessage.AddFriendRequest request, Qos1PublishHandler.IMCallback callback) {
             long[] head = new long[1];
             ErrorCode errorCode = m_messagesStore.saveAddFriendRequest(fromUser, request, head);
             if (errorCode == ERROR_CODE_SUCCESS) {
@@ -30,7 +30,7 @@ public class AddFriendHandler extends GroupHandler<WFCMessage.AddFriendRequest> 
                     publisher.publishNotification(IMTopic.NotifyFriendRequestTopic, request.getTargetUid(), head[0], fromUser, request.getReason());
                 } else if(user != null && user.getType() == ProtoConstants.UserType.UserType_Robot) {
                     WFCMessage.HandleFriendRequest handleFriendRequest = WFCMessage.HandleFriendRequest.newBuilder().setTargetUid(fromUser).setStatus(ProtoConstants.FriendRequestStatus.RequestStatus_Accepted).build();
-                    mServer.internalRpcMsg(request.getTargetUid(), null, handleFriendRequest.toByteArray(), 0, fromUser, HandleFriendRequestTopic, false);
+                    mServer.internalRpcMsg(request.getTargetUid(), null, section, handleFriendRequest.toByteArray(), 0, fromUser, HandleFriendRequestTopic, false);
                 }
             }
             return errorCode;

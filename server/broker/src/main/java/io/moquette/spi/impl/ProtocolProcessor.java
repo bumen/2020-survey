@@ -16,49 +16,78 @@
 
 package io.moquette.spi.impl;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import cn.wildfirechat.common.ErrorCode;
-import cn.wildfirechat.pojos.SendMessageData;
 import cn.wildfirechat.pojos.UserOnlineStatus;
 import cn.wildfirechat.proto.ProtoConstants;
 import cn.wildfirechat.proto.WFCMessage;
-import com.google.gson.Gson;
-import com.hazelcast.core.Member;
-import com.hazelcast.util.StringUtil;
 import io.moquette.BrokerConstants;
-import io.moquette.persistence.RPCCenter;
 import io.moquette.interception.InterceptHandler;
 import io.moquette.interception.messages.InterceptAcknowledgedMessage;
 import io.moquette.persistence.MemorySessionStore;
+import io.moquette.persistence.RPCCenter;
 import io.moquette.persistence.TargetEntry;
 import io.moquette.server.ConnectionDescriptor;
 import io.moquette.server.ConnectionDescriptorStore;
 import io.moquette.server.Server;
 import io.moquette.server.netty.NettyUtils;
-import io.moquette.spi.*;
+import io.moquette.spi.ClientSession;
+import io.moquette.spi.IMessagesStore;
 import io.moquette.spi.IMessagesStore.StoredMessage;
+import io.moquette.spi.ISessionsStore;
 import io.moquette.spi.impl.security.AES;
 import io.moquette.spi.security.IAuthenticator;
 import io.moquette.spi.security.IAuthorizator;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelPipeline;
-import io.netty.handler.codec.mqtt.*;
+import io.netty.handler.codec.mqtt.MqttConnAckMessage;
+import io.netty.handler.codec.mqtt.MqttConnAckVariableHeader;
+import io.netty.handler.codec.mqtt.MqttConnectAckPayload;
+import io.netty.handler.codec.mqtt.MqttConnectMessage;
+import io.netty.handler.codec.mqtt.MqttConnectPayload;
+import io.netty.handler.codec.mqtt.MqttConnectReturnCode;
+import io.netty.handler.codec.mqtt.MqttFixedHeader;
+import io.netty.handler.codec.mqtt.MqttMessage;
+import io.netty.handler.codec.mqtt.MqttMessageType;
+import io.netty.handler.codec.mqtt.MqttPubAckMessage;
+import io.netty.handler.codec.mqtt.MqttPublishMessage;
+import io.netty.handler.codec.mqtt.MqttQoS;
+import io.netty.handler.codec.mqtt.MqttSubAckMessage;
+import io.netty.handler.codec.mqtt.MqttSubAckPayload;
+import io.netty.handler.codec.mqtt.MqttSubscribeMessage;
+import io.netty.handler.codec.mqtt.MqttTopicSubscription;
+import io.netty.handler.codec.mqtt.MqttUnsubscribeMessage;
+import io.netty.handler.codec.mqtt.MqttVersion;
 import io.netty.handler.timeout.IdleStateHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import win.liyufan.im.HttpUtils;
 import win.liyufan.im.Utility;
 
-import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
+import static io.moquette.server.ConnectionDescriptor.ConnectionState.DISCONNECTED;
+import static io.moquette.server.ConnectionDescriptor.ConnectionState.ESTABLISHED;
+import static io.moquette.server.ConnectionDescriptor.ConnectionState.INTERCEPTORS_NOTIFIED;
+import static io.moquette.server.ConnectionDescriptor.ConnectionState.MESSAGES_DROPPED;
+import static io.moquette.server.ConnectionDescriptor.ConnectionState.SENDACK;
+import static io.moquette.server.ConnectionDescriptor.ConnectionState.SESSION_CREATED;
 import static io.moquette.spi.impl.InternalRepublisher.createPublishForQos;
 import static io.moquette.spi.impl.Utils.readBytesAndRewind;
-import static io.netty.handler.codec.mqtt.MqttConnectReturnCode.*;
+import static io.netty.handler.codec.mqtt.MqttConnectReturnCode.CONNECTION_ACCEPTED;
+import static io.netty.handler.codec.mqtt.MqttConnectReturnCode.CONNECTION_REFUSED_BAD_USER_NAME_OR_PASSWORD;
+import static io.netty.handler.codec.mqtt.MqttConnectReturnCode.CONNECTION_REFUSED_IDENTIFIER_REJECTED;
+import static io.netty.handler.codec.mqtt.MqttConnectReturnCode.CONNECTION_REFUSED_SESSION_NOT_EXIST;
+import static io.netty.handler.codec.mqtt.MqttConnectReturnCode.CONNECTION_REFUSED_UNACCEPTABLE_PROTOCOL_VERSION;
 import static io.netty.handler.codec.mqtt.MqttMessageIdVariableHeader.from;
-import static io.netty.handler.codec.mqtt.MqttQoS.*;
-import static io.moquette.server.ConnectionDescriptor.ConnectionState.*;
+import static io.netty.handler.codec.mqtt.MqttQoS.AT_LEAST_ONCE;
+
+import com.google.gson.Gson;
+import com.hazelcast.util.StringUtil;
 
 /**
  * Class responsible to handle the logic of MQTT protocol it's the director of the protocol
@@ -241,6 +270,9 @@ public class ProtocolProcessor {
             return;
         }
         MemorySessionStore.Session session = m_sessionsStore.getSession(clientId);
+
+        connectionDescriptors.bindSection(session.getSection(), clientId);
+
         if(session != null) {
             session.refreshLastActiveTime();
             forwardOnlineStatusEvent(payload.userName(), clientId, session.getPlatform(), UserOnlineStatus.ONLINE);
@@ -685,15 +717,19 @@ public class ProtocolProcessor {
         return m_sessionsStore;
     }
 
-    public void onRpcMsg(String fromUser, String clientId, byte[] message, int messageId, String from, String request, boolean isAdmin) {
+    public void onRpcMsg(String fromUser, String clientId, String section, byte[] message, int messageId, String from, String request, boolean isAdmin) {
         if(request.equals(RPCCenter.KICKOFF_USER_REQUEST)) {
             String userId = new String(message);
             mServer.getImBusinessScheduler().execute(()->handleTargetRemovedFromCurrentNode(new TargetEntry(TargetEntry.Type.TARGET_TYPE_USER, userId)));
             return;
         }
-        qos1PublishHandler.onRpcMsg(fromUser, clientId, message, messageId, from, request, isAdmin);
+        qos1PublishHandler.onRpcMsg(fromUser, clientId, section, message, messageId, from, request, isAdmin);
     }
     public void shutdown() {
         messagesPublisher.stopChatroomScheduler();
+    }
+
+    public MessagesPublisher getMessagesPublisher() {
+        return this.messagesPublisher;
     }
 }

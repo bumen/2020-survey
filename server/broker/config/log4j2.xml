@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="INFO" monitorInterval="60" shutdownHook="disable">
+    <Properties>
+        <Property name="LOG_PREFIX">${sys:logging.path}/java-im</Property>
+        <Property name="NET_LOG_PREFIX">${sys:logging.path}/java-http</Property>
+        <Property name="BUSINESS_LOG_PREFIX">${sys:logging.path}/java-mqtt</Property>
+        <Property name="SERVER_LOG_PREFIX">${sys:logging.path}/java-server</Property>
+        <Property name="PATTERN_SUFFIX">-%d{yyyyMMdd}.log</Property>
+    </Properties>
+
+    <Appenders>
+        <RollingRandomAccessFile name="HTTP"
+          fileName="${NET_LOG_PREFIX}.log"
+          filePattern="${NET_LOG_PREFIX}${PATTERN_SUFFIX}"
+          immediateFlush="false">
+            <PatternLayout pattern="%d [%-5p][%t] %c - [%X{traceId},%X{SOFA-SpanId}] %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+            </Policies>
+            <DefaultRolloverStrategy max="10"/>
+        </RollingRandomAccessFile>
+
+        <RollingRandomAccessFile name="MQTT"
+          fileName="${BUSINESS_LOG_PREFIX}.log"
+          filePattern="${BUSINESS_LOG_PREFIX}${PATTERN_SUFFIX}"
+          immediateFlush="false">
+            <PatternLayout pattern="%d [%-5p][%t] %c - [%X{traceId},%X{SOFA-SpanId}] %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+            </Policies>
+            <DefaultRolloverStrategy max="10"/>
+        </RollingRandomAccessFile>
+
+        <RollingRandomAccessFile name="SERVER"
+          fileName="${SERVER_LOG_PREFIX}.log"
+          filePattern="${SERVER_LOG_PREFIX}${PATTERN_SUFFIX}"
+          immediateFlush="false">
+            <PatternLayout pattern="%d [%-5p][%t] %c - [%X{traceId},%X{SOFA-SpanId}] %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+            </Policies>
+            <DefaultRolloverStrategy max="10"/>
+        </RollingRandomAccessFile>
+
+        <RollingRandomAccessFile name="LOGFILE"
+                                 fileName="${LOG_PREFIX}.log"
+                                 filePattern="${LOG_PREFIX}${PATTERN_SUFFIX}"
+                                 immediateFlush="false">
+            <PatternLayout pattern="%d [%-5p][%t] %c - [%X{traceId},%X{SOFA-SpanId}] %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+            </Policies>
+            <DefaultRolloverStrategy max="10"/>
+        </RollingRandomAccessFile>
+
+        <RollingRandomAccessFile name="LOGFILEERROR"
+                                 fileName="${LOG_PREFIX}-error.log"
+                                 filePattern="${LOG_PREFIX}-error${PATTERN_SUFFIX}">
+            <ThresholdFilter level="WARN" onMatch="ACCEPT" onMismatch="DENY"/>
+            <PatternLayout pattern="%d [%-5p][%t] %c - [%X{traceId},%X{SOFA-SpanId}] %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+            </Policies>
+            <DefaultRolloverStrategy max="10"/>
+        </RollingRandomAccessFile>
+
+        <Async name="LOGASYNC">
+            <AppenderRef ref="LOGFILE"/>
+            <AppenderRef ref="LOGFILEERROR"/>
+        </Async>
+
+        <Async name="NET_LOGASYNC">
+            <AppenderRef ref="NET"/>
+            <AppenderRef ref="LOGFILEERROR"/>
+        </Async>
+
+        <Async name="BUSINESS_LOGASYNC">
+            <AppenderRef ref="BUSINESS"/>
+            <AppenderRef ref="LOGFILEERROR"/>
+        </Async>
+
+        <Async name="SERVER_LOGASYNC">
+            <AppenderRef ref="SERVER"/>
+            <AppenderRef ref="LOGFILEERROR"/>
+        </Async>
+
+    </Appenders>
+
+    <Loggers>
+        <Logger name="NET" level="INFO" additivity="false">
+            <AppenderRef ref="NET_LOGASYNC"/>
+        </Logger>
+
+        <Logger name="BUSINESS" level="INFO" additivity="false">
+            <AppenderRef ref="BUSINESS_LOGASYNC"/>
+        </Logger>
+
+        <Logger name="SERVER" level="debug" additivity="false">
+            <AppenderRef ref="SERVER_LOGASYNC"/>
+        </Logger>
+
+        <Logger name="com.playcrab" level="INFO" additivity="false">
+            <AppenderRef ref="LOGASYNC"/>
+        </Logger>
+
+        <Root level="INFO">
+            <AppenderRef ref="LOGASYNC"/>
+        </Root>
+    </Loggers>
+</Configuration>

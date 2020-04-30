@@ -9,13 +9,10 @@
 package com.xiaoleilu.loServer.action.robot;
 
 
+import java.util.concurrent.Executor;
+
 import cn.wildfirechat.common.APIPath;
-import com.google.gson.Gson;
-import com.xiaoleilu.loServer.RestResult;
-import com.xiaoleilu.loServer.annotation.HttpMethod;
-import com.xiaoleilu.loServer.annotation.Route;
-import com.xiaoleilu.loServer.handler.Request;
-import com.xiaoleilu.loServer.handler.Response;
+import cn.wildfirechat.common.ErrorCode;
 import cn.wildfirechat.pojos.SendMessageData;
 import cn.wildfirechat.pojos.SendMessageResult;
 import io.moquette.persistence.RPCCenter;
@@ -24,10 +21,14 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import cn.wildfirechat.common.ErrorCode;
 import win.liyufan.im.IMTopic;
 
-import java.util.concurrent.Executor;
+import com.google.gson.Gson;
+import com.xiaoleilu.loServer.RestResult;
+import com.xiaoleilu.loServer.annotation.HttpMethod;
+import com.xiaoleilu.loServer.annotation.Route;
+import com.xiaoleilu.loServer.handler.Request;
+import com.xiaoleilu.loServer.handler.Response;
 
 @Route(APIPath.Robot_Message_Send)
 @HttpMethod("POST")
@@ -44,7 +45,7 @@ public class SendMessageAction extends RobotAction {
             SendMessageData sendMessageData = getRequestBody(request.getNettyRequest(), SendMessageData.class);
             sendMessageData.setSender(robot.getUid());
             if (SendMessageData.isValide(sendMessageData)) {
-                RPCCenter.getInstance().sendRequest(sendMessageData.getSender(), null, IMTopic.SendMessageTopic, sendMessageData.toProtoMessage().toByteArray(), sendMessageData.getSender(), TargetEntry.Type.TARGET_TYPE_USER, new RPCCenter.Callback() {
+                RPCCenter.getInstance().sendRequest(sendMessageData.getSender(), null, "", IMTopic.SendMessageTopic, sendMessageData.toProtoMessage().toByteArray(), sendMessageData.getSender(), TargetEntry.Type.TARGET_TYPE_USER, new RPCCenter.Callback() {
                     @Override
                     public void onSuccess(byte[] result) {
                         ByteBuf byteBuf = Unpooled.buffer();

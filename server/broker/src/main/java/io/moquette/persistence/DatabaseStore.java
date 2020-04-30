@@ -8,14 +8,31 @@
 
 package io.moquette.persistence;
 
+import java.io.IOException;
+import java.security.MessageDigest;
+import java.sql.Blob;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.function.Function;
+
 import cn.wildfirechat.pojos.SystemSettingPojo;
 import cn.wildfirechat.proto.ProtoConstants;
 import cn.wildfirechat.proto.WFCMessage;
 import cn.wildfirechat.server.ThreadPoolExecutorWrapper;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.MultiMap;
-import com.hazelcast.util.StringUtil;
-import com.xiaoleilu.loServer.model.FriendData;
 import io.moquette.server.Server;
 import io.moquette.spi.ClientSession;
 import org.slf4j.Logger;
@@ -25,17 +42,17 @@ import win.liyufan.im.MessageBundle;
 import win.liyufan.im.MessageShardingUtil;
 import win.liyufan.im.Utility;
 
-import java.io.IOException;
-import java.security.MessageDigest;
-import java.sql.*;
-import java.util.*;
-import java.util.function.Function;
-
-
 import static cn.wildfirechat.proto.ProtoConstants.PersistFlag.Transparent;
-import static io.moquette.persistence.MemoryMessagesStore.USER_STATUS;
+import static cn.wildfirechat.proto.ProtoConstants.SearchUserType.SearchUserType_General;
+import static cn.wildfirechat.proto.ProtoConstants.SearchUserType.SearchUserType_Mobile;
+import static cn.wildfirechat.proto.ProtoConstants.SearchUserType.SearchUserType_Name;
+import static cn.wildfirechat.proto.ProtoConstants.SearchUserType.SearchUserType_Name_Mobile;
 import static io.moquette.server.Constants.MAX_MESSAGE_QUEUE;
-import static cn.wildfirechat.proto.ProtoConstants.SearchUserType.*;
+
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.MultiMap;
+import com.hazelcast.util.StringUtil;
+import com.xiaoleilu.loServer.model.FriendData;
 
 public class DatabaseStore {
     private static final Logger LOG = LoggerFactory.getLogger(DatabaseStore.class);
@@ -169,8 +186,8 @@ public class DatabaseStore {
                 ", `_mobile`" +
                 ", `_gender`" +
                 ", `_email`" +
-                ", `_address`" +
-                ", `_company`" +
+                ", `_section`" +
+                ", `_arena`" +
                 ", `_social`" +
                 ", `_extra`" +
                 ", `_dt` from t_user";
@@ -1142,7 +1159,7 @@ public class DatabaseStore {
     }
 
     List<MemorySessionStore.Session> getUserActivedSessions(String uid) {
-        String sql = "select  `_cid`, `_package_name`,`_token`,`_voip_token`,`_secret`,`_db_secret`,`_platform`,`_push_type`,`_device_name`,`_device_version`,`_phone_name`,`_language`,`_carrier_name`, `_dt` from t_user_session where `_uid` = ? and `_deleted` = 0";
+        String sql = "select  `_cid`, `_section`,  `_package_name`,`_token`,`_voip_token`,`_secret`,`_db_secret`,`_platform`,`_push_type`,`_device_name`,`_device_version`,`_phone_name`,`_language`,`_carrier_name`, `_dt` from t_user_session where `_uid` = ? and `_deleted` = 0";
         Connection connection = null;
         PreparedStatement statement = null;
         List<MemorySessionStore.Session> result = new ArrayList<>();
@@ -1160,6 +1177,7 @@ public class DatabaseStore {
                 ClientSession clientSession = new ClientSession(cid, Server.getServer().getStore().sessionsStore());
                 MemorySessionStore.Session session = new MemorySessionStore.Session(uid, cid, clientSession);
 
+                session.setSection(resultSet.getString(index++));
                 session.setAppName(resultSet.getString(index++));
                 session.setDeviceToken(resultSet.getString(index++));
                 session.setVoipDeviceToken(resultSet.getString(index++));
@@ -1207,7 +1225,7 @@ public class DatabaseStore {
     }
 
     MemorySessionStore.Session getSession(String uid, String clientId, ClientSession clientSession) {
-        String sql = "select  `_package_name`,`_token`,`_voip_token`,`_secret`,`_db_secret`,`_platform`,`_push_type`,`_device_name`,`_device_version`,`_phone_name`,`_language`,`_carrier_name`, `_dt`, `_deleted` from t_user_session where `_uid` = ? and `_cid` = ? limit 1";
+        String sql = "select `_section`, `_package_name`,`_token`,`_voip_token`,`_secret`,`_db_secret`,`_platform`,`_push_type`,`_device_name`,`_device_version`,`_phone_name`,`_language`,`_carrier_name`, `_dt`, `_deleted` from t_user_session where `_uid` = ? and `_cid` = ? limit 1";
         Connection connection = null;
         PreparedStatement statement = null;
         ResultSet resultSet = null;
@@ -1221,6 +1239,7 @@ public class DatabaseStore {
                 MemorySessionStore.Session session = new MemorySessionStore.Session(uid, clientId, clientSession);
 
                 int index = 1;
+                session.setSection(resultSet.getString(index++));
                 session.setAppName(resultSet.getString(index++));
                 session.setDeviceToken(resultSet.getString(index++));
                 session.setVoipDeviceToken(resultSet.getString(index++));
@@ -1518,24 +1537,24 @@ public class DatabaseStore {
         }
     }
 
-    MemorySessionStore.Session createSession(String uid, String clientId, ClientSession clientSession, int platform) {
+    MemorySessionStore.Session createSession(String uid, String clientId, ClientSession clientSession, String section) {
         Connection connection = null;
         PreparedStatement statement = null;
         LOG.info("Database create session {},{}", uid, clientId);
         try {
             connection = DBUtil.getConnection();
-            String sql = "insert into t_user_session  (`_uid`,`_cid`,`_platform`,`_secret`,`_db_secret`, `_dt`) values (?,?,?,?,?,?)";
+            String sql = "insert into t_user_session  (`_uid`,`_cid`,`_section`,`_secret`,`_db_secret`, `_dt`) values (?,?,?,?,?,?)";
 
             statement = connection.prepareStatement(sql);
 
             int index = 1;
 
             MemorySessionStore.Session session = new MemorySessionStore.Session(uid, clientId, clientSession);
-            session.setPlatform(platform);
+            session.setSection(section);
 
             statement.setString(index++, uid);
             statement.setString(index++, clientId);
-            statement.setInt(index++, platform);
+            statement.setString(index++, section);
 
 
             session.setSecret(UUID.randomUUID().toString());
@@ -2174,8 +2193,8 @@ public class DatabaseStore {
                     ", `_mobile`" +
                     ", `_gender`" +
                     ", `_email`" +
-                    ", `_address`" +
-                    ", `_company`" +
+                    ", `_section`" +
+                    ", `_arena`" +
                     ", `_social`" +
                     ", `_extra`" +
                     ", `_type`" +
@@ -2348,8 +2367,8 @@ public class DatabaseStore {
                 ", `_mobile`" +
                 ", `_gender`" +
                 ", `_email`" +
-                ", `_address`" +
-                ", `_company`" +
+                ", `_section`" +
+                ", `_arena`" +
                 ", `_social`" +
                 ", `_extra`" +
                 ", `_type`" +
@@ -3257,11 +3276,145 @@ public class DatabaseStore {
         });
     }
 
+
+    public ConcurrentSkipListMap<Long, Long> reloadWorldMessageMaps(String section) {
+        Connection connection = null;
+        PreparedStatement statement = null;
+        ResultSet rs = null;
+        ConcurrentSkipListMap<Long, Long> out = new ConcurrentSkipListMap<>();
+        try {
+            connection = DBUtil.getConnection();
+
+            String sql = "select `_seq`, `_mid` from " + getWorldMessageTable(section) + " where `_world_id` = ? order by `_seq` DESC limit " + MAX_MESSAGE_QUEUE;
+
+            statement = connection.prepareStatement(sql);
+
+            statement.setString(1, section);
+
+            rs = statement.executeQuery();
+            while (rs.next()) {
+                int index = 1;
+                long msgSeq = rs.getLong(index++);
+                long msgId = rs.getLong(index);
+                out.put(msgSeq, msgId);
+            }
+        } catch (SQLException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            Utility.printExecption(LOG, e);
+        } finally {
+            DBUtil.closeDB(connection, statement, rs);
+        }
+
+        return out;
+    }
+
+    public void persistWorldMessage(final String section, final long messageId, final long messageSeq) {
+        mScheduler.execute(()->{
+            Connection connection = null;
+            PreparedStatement statement = null;
+            try {
+                connection = DBUtil.getConnection();
+
+                String sql = "insert into " + getWorldMessageTable(section) + " (`_mid`, `_world_id`, `_seq`) values(?, ?, ?)";
+
+                statement = connection.prepareStatement(sql);
+                int index = 1;
+                statement.setLong(index++, messageId);
+                statement.setString(index++, section);
+                statement.setLong(index++, messageSeq);
+                int count = statement.executeUpdate();
+                LOG.info("Update rows {}", count);
+            } catch (SQLException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+                Utility.printExecption(LOG, e);
+            } finally {
+                DBUtil.closeDB(connection, statement);
+            }
+        });
+    }
+
+
+    public ConcurrentSkipListMap<Long, Long> reloadArenaMessageMaps(String arenaId) {
+        Connection connection = null;
+        PreparedStatement statement = null;
+        ResultSet rs = null;
+        ConcurrentSkipListMap<Long, Long> out = new ConcurrentSkipListMap<>();
+        try {
+            connection = DBUtil.getConnection();
+
+            String sql = "select `_seq`, `_mid` from " + getArenaMessageTable(arenaId) + " where `_arena_id` = ? order by `_seq` DESC limit " + MAX_MESSAGE_QUEUE;
+
+            statement = connection.prepareStatement(sql);
+
+            statement.setString(1, arenaId);
+
+            rs = statement.executeQuery();
+            while (rs.next()) {
+                int index = 1;
+                long msgSeq = rs.getLong(index++);
+                long msgId = rs.getLong(index);
+                out.put(msgSeq, msgId);
+            }
+        } catch (SQLException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            Utility.printExecption(LOG, e);
+        } finally {
+            DBUtil.closeDB(connection, statement, rs);
+        }
+
+        return out;
+    }
+
+    public void persistArenaMessage(final String arenaId, final long messageId, final long messageSeq) {
+        mScheduler.execute(()->{
+            Connection connection = null;
+            PreparedStatement statement = null;
+            try {
+                connection = DBUtil.getConnection();
+
+                String sql = "insert into " + getArenaMessageTable(arenaId) + " (`_mid`, `_arena_id`, `_seq`) values(?, ?, ?)";
+
+                statement = connection.prepareStatement(sql);
+                int index = 1;
+                statement.setLong(index++, messageId);
+                statement.setString(index++, arenaId);
+                statement.setLong(index++, messageSeq);
+                int count = statement.executeUpdate();
+                LOG.info("Update rows {}", count);
+            } catch (SQLException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+                Utility.printExecption(LOG, e);
+            } finally {
+                DBUtil.closeDB(connection, statement);
+            }
+        });
+    }
+
     private String getUserMessageTable(String uid) {
         if (DBUtil.IsEmbedDB) {
             return "t_user_messages";
         }
         int hashId = Math.abs(uid.hashCode())%128;
         return "t_user_messages_" + hashId;
+    }
+
+    private String getWorldMessageTable(String section) {
+        if (DBUtil.IsEmbedDB) {
+            return "t_world_messages";
+        }
+        int hashId = Math.abs(section.hashCode())%128;
+        return "t_world_messages_" + hashId;
+    }
+
+    private String getArenaMessageTable(String arenaId) {
+        if (DBUtil.IsEmbedDB) {
+            return "t_arena_messages";
+        }
+        int hashId = Math.abs(arenaId.hashCode())%128;
+        return "t_arena_messages_" + hashId;
     }
 }

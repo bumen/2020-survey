@@ -8,18 +8,18 @@
 
 package io.moquette.imhandler;
 
+import java.util.List;
+
+import cn.wildfirechat.common.ErrorCode;
 import cn.wildfirechat.proto.WFCMessage;
 import io.moquette.spi.impl.Qos1PublishHandler;
 import io.netty.buffer.ByteBuf;
-import cn.wildfirechat.common.ErrorCode;
 import win.liyufan.im.IMTopic;
-
-import java.util.List;
 
 @Handler(IMTopic.UserSearchTopic)
 public class UserSearchHandler extends IMHandler<WFCMessage.SearchUserRequest> {
     @Override
-    public ErrorCode action(ByteBuf ackPayload, String clientID, String fromUser, boolean isAdmin, WFCMessage.SearchUserRequest request, Qos1PublishHandler.IMCallback callback) {
+    public ErrorCode action(ByteBuf ackPayload, String clientID, String fromUser, String section,  boolean isAdmin, WFCMessage.SearchUserRequest request, Qos1PublishHandler.IMCallback callback) {
         List<WFCMessage.User> users = m_messagesStore.searchUser(request.getKeyword(), request.getFuzzy(), request.getPage());
         WFCMessage.SearchUserResult.Builder builder = WFCMessage.SearchUserResult.newBuilder();
         builder.addAllEntry(users);

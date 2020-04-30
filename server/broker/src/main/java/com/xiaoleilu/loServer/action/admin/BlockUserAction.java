@@ -9,19 +9,20 @@
 package com.xiaoleilu.loServer.action.admin;
 
 import cn.wildfirechat.common.APIPath;
-import com.google.gson.Gson;
-import com.xiaoleilu.loServer.RestResult;
-import com.xiaoleilu.loServer.annotation.HttpMethod;
-import com.xiaoleilu.loServer.annotation.Route;
-import com.xiaoleilu.loServer.handler.Request;
-import com.xiaoleilu.loServer.handler.Response;
+import cn.wildfirechat.common.ErrorCode;
 import cn.wildfirechat.pojos.InputOutputUserBlockStatus;
 import io.moquette.persistence.RPCCenter;
 import io.moquette.persistence.TargetEntry;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.util.internal.StringUtil;
-import cn.wildfirechat.common.ErrorCode;
+
+import com.google.gson.Gson;
+import com.xiaoleilu.loServer.RestResult;
+import com.xiaoleilu.loServer.annotation.HttpMethod;
+import com.xiaoleilu.loServer.annotation.Route;
+import com.xiaoleilu.loServer.handler.Request;
+import com.xiaoleilu.loServer.handler.Response;
 
 @Route(APIPath.User_Update_Block_Status)
 @HttpMethod("POST")
@@ -46,7 +47,7 @@ public class BlockUserAction extends AdminAction {
                 response.setContent(new Gson().toJson(result));
 
                 if (inputUserBlock.getStatus() == 2) {
-                    RPCCenter.getInstance().sendRequest(null, null, RPCCenter.KICKOFF_USER_REQUEST, inputUserBlock.getUserId().getBytes(), inputUserBlock.getUserId(), TargetEntry.Type.TARGET_TYPE_USER, null, true);
+                    RPCCenter.getInstance().sendRequest(null, null, "", RPCCenter.KICKOFF_USER_REQUEST, inputUserBlock.getUserId().getBytes(), inputUserBlock.getUserId(), TargetEntry.Type.TARGET_TYPE_USER, null, true);
                 }
 
                 sendResponse(response, ErrorCode.ERROR_CODE_SUCCESS, null);

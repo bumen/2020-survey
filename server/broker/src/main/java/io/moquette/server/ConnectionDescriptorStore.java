@@ -16,6 +16,14 @@
 
 package io.moquette.server;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentSkipListSet;
+
+import cn.wildfirechat.common.ErrorCode;
 import io.moquette.connections.IConnectionsManager;
 import io.moquette.connections.MqttConnectionMetrics;
 import io.moquette.connections.MqttSession;
@@ -27,23 +35,19 @@ import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.handler.codec.mqtt.MqttMessageType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import cn.wildfirechat.common.ErrorCode;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 public class ConnectionDescriptorStore implements IConnectionsManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConnectionDescriptorStore.class);
 
     private final ConcurrentMap<String, ConnectionDescriptor> connectionDescriptors;
+    private final ConcurrentMap<String, Set<String>> sectionClients;
     private final ISessionsStore sessionsStore;
 
     public ConnectionDescriptorStore(ISessionsStore sessionsStore) {
         this.connectionDescriptors = new ConcurrentHashMap<>();
         this.sessionsStore = sessionsStore;
+        this.sectionClients = new ConcurrentHashMap<>();
     }
 
     public boolean sendMessage(MqttMessage message, Integer messageID, String clientID, ErrorCode errorCode) {
@@ -165,4 +169,16 @@ public class ConnectionDescriptorStore implements IConnectionsManager {
         return result;
     }
 
+    public void bindSection(String section, String clientId) {
+        Set<String> clients = sectionClients.computeIfAbsent(section, (k)->{
+            return new ConcurrentSkipListSet<>();
+        });
+
+        clients.add(clientId);
+    }
+
+    @Override
+    public Set<String> getSectionClients(String section) {
+        return sectionClients.get(section);
+    }
 }

@@ -16,23 +16,32 @@
 
 package io.moquette.persistence;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
+
 import cn.wildfirechat.common.ErrorCode;
-import cn.wildfirechat.proto.ProtoConstants;
 import cn.wildfirechat.proto.WFCMessage;
-import com.hazelcast.util.StringUtil;
 import io.moquette.BrokerConstants;
 import io.moquette.server.Constants;
 import io.moquette.server.Server;
 import io.moquette.spi.ClientSession;
-import io.moquette.spi.ISessionsStore;
 import io.moquette.spi.IMessagesStore.StoredMessage;
+import io.moquette.spi.ISessionsStore;
 import io.netty.handler.codec.mqtt.MqttVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import win.liyufan.im.Utility;
 
-import java.util.*;
-import java.util.concurrent.*;
+import com.hazelcast.util.StringUtil;
 
 public class MemorySessionStore implements ISessionsStore {
     private static int dumy = 1;
@@ -158,6 +167,7 @@ public class MemorySessionStore implements ISessionsStore {
         private String phoneName;
         private String language;
         private String carrierName;
+        private String section;
         private long updateDt;
 
         final ClientSession clientSession;
@@ -235,6 +245,14 @@ public class MemorySessionStore implements ISessionsStore {
 
         public void setVoipDeviceToken(String voipDeviceToken) {
             this.voipDeviceToken = voipDeviceToken;
+        }
+
+        public String getSection() {
+            return section;
+        }
+
+        public void setSection(String section) {
+            this.section = section;
         }
 
         @Override
@@ -333,7 +351,7 @@ public class MemorySessionStore implements ISessionsStore {
     }
 
     @Override
-    public Session updateOrCreateUserSession(String username, String clientID, int platform) {
+    public Session updateOrCreateUserSession(String username, String clientID, String section) {
         LOG.debug("createUserSession for client <{}>, user <{}>", clientID, username);
 
         Session session = sessions.get(clientID);
@@ -347,7 +365,7 @@ public class MemorySessionStore implements ISessionsStore {
         session = databaseStore.getSession(username, clientID, clientSession);
 
         if (session == null) {
-            session = databaseStore.createSession(username, clientID, clientSession, platform);
+            session = databaseStore.createSession(username, clientID, clientSession, section);
         }
         sessions.put(clientID, session);
 
@@ -355,51 +373,6 @@ public class MemorySessionStore implements ISessionsStore {
         if (session.getDeleted() > 0) {
             session.setDeleted(0);
             databaseStore.updateSessionDeleted(username, clientID, 0);
-        }
-
-        if (session.getPlatform() != platform) {
-            session.setPlatform(platform);
-            databaseStore.updateSessionPlatform(username, clientID, platform);
-        }
-
-
-        if (!supportMultiEndpoint && platform > 0) {
-            databaseStore.clearMultiEndpoint(username, clientID, platform);
-            if (userSessions.get(username) != null) {
-                Iterator<String> it = userSessions.get(username).iterator();
-                while (it.hasNext()) {
-                    String c = it.next();
-                    if (!clientID.equals(c)) {
-                        Session s = sessions.get(c);
-                        if (s == null) {
-                            it.remove();
-                            continue;
-                        }
-
-                        boolean remove = false;
-                        if (platform == ProtoConstants.Platform.Platform_Android || platform == ProtoConstants.Platform.Platform_iOS) {
-                            if (s.getPlatform() == ProtoConstants.Platform.Platform_Android || s.getPlatform() == ProtoConstants.Platform.Platform_iOS) {
-                                remove = true;
-                            }
-                        } else if(platform == ProtoConstants.Platform.Platform_OSX || platform == ProtoConstants.Platform.Platform_Windows || platform == ProtoConstants.Platform.Platform_Linux) {
-                            if (s.getPlatform() == ProtoConstants.Platform.Platform_OSX || s.getPlatform() == ProtoConstants.Platform.Platform_Windows || platform == ProtoConstants.Platform.Platform_Linux) {
-                                remove = true;
-                            }
-                        } else {
-                            if (s.getPlatform() ==platform) {
-                                remove = true;
-                            }
-                        }
-
-                        if (remove) {
-                            sessions.remove(c);
-                            mServer.getProcessor().kickoffSession(s);
-                            it.remove();
-                        }
-                    }
-                }
-            }
-
         }
 
         return session;

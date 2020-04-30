@@ -19,7 +19,7 @@ import win.liyufan.im.IMTopic;
 @Handler(IMTopic.DestroyUserTopic)
 public class DestroyUserHandler extends IMHandler<WFCMessage.IDBuf> {
     @Override
-    public ErrorCode action(ByteBuf ackPayload, String clientID, String fromUser, boolean isAdmin, WFCMessage.IDBuf request, Qos1PublishHandler.IMCallback callback) {
+    public ErrorCode action(ByteBuf ackPayload, String clientID, String fromUser, String section,  boolean isAdmin, WFCMessage.IDBuf request, Qos1PublishHandler.IMCallback callback) {
         if (isAdmin) {
             mServer.getImBusinessScheduler().execute(()-> {
                 m_sessionsStore.clearUserSession(fromUser);

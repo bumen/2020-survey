@@ -16,39 +16,6 @@
 
 package io.moquette.server;
 
-import cn.wildfirechat.push.PushServer;
-import cn.wildfirechat.server.ThreadPoolExecutorWrapper;
-import com.hazelcast.config.ClasspathXmlConfig;
-import com.hazelcast.config.Config;
-import com.hazelcast.config.FileSystemXmlConfig;
-import com.hazelcast.core.*;
-import com.xiaoleilu.loServer.LoServer;
-import com.xiaoleilu.loServer.ServerSetting;
-import com.xiaoleilu.loServer.action.admin.AdminAction;
-import io.moquette.BrokerConstants;
-import io.moquette.persistence.*;
-import io.moquette.connections.IConnectionsManager;
-import io.moquette.interception.*;
-import io.moquette.server.config.*;
-import io.moquette.server.netty.NettyAcceptor;
-import io.moquette.spi.IStore;
-import io.moquette.spi.impl.ProtocolProcessor;
-import io.moquette.spi.impl.ProtocolProcessorBootstrapper;
-import io.moquette.spi.impl.security.AES;
-import io.moquette.spi.impl.subscriptions.Token;
-import io.moquette.spi.security.IAuthenticator;
-import io.moquette.spi.security.IAuthorizator;
-import io.moquette.spi.security.ISslContextCreator;
-import io.moquette.spi.security.Tokenor;
-import io.netty.util.ResourceLeakDetector;
-import io.netty.util.internal.StringUtil;
-import win.liyufan.im.DBUtil;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import win.liyufan.im.MessageShardingUtil;
-import win.liyufan.im.Utility;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -57,20 +24,69 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Executors;
 
-import static io.moquette.BrokerConstants.*;
+import cn.wildfirechat.push.PushServer;
+import cn.wildfirechat.server.ThreadPoolExecutorWrapper;
+import io.moquette.BrokerConstants;
+import io.moquette.connections.IConnectionsManager;
+import io.moquette.interception.InterceptHandler;
+import io.moquette.persistence.MemoryStorageService;
+import io.moquette.persistence.RPCCenter;
+import io.moquette.server.config.FileResourceLoader;
+import io.moquette.server.config.IConfig;
+import io.moquette.server.config.IResourceLoader;
+import io.moquette.server.config.MediaServerConfig;
+import io.moquette.server.config.MemoryConfig;
+import io.moquette.server.config.ResourceLoaderConfig;
+import io.moquette.server.netty.NettyAcceptor;
+import io.moquette.spi.IStore;
+import io.moquette.spi.impl.ProtocolProcessor;
+import io.moquette.spi.impl.ProtocolProcessorBootstrapper;
+import io.moquette.spi.impl.security.AES;
+import io.moquette.spi.security.IAuthenticator;
+import io.moquette.spi.security.IAuthorizator;
+import io.moquette.spi.security.ISslContextCreator;
+import io.moquette.spi.security.Tokenor;
+import io.netty.util.ResourceLeakDetector;
+import io.netty.util.internal.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import win.liyufan.im.DBUtil;
+import win.liyufan.im.MessageShardingUtil;
+import win.liyufan.im.Utility;
+
+import static io.moquette.BrokerConstants.HTTP_SERVER_API_NO_CHECK_TIME;
+import static io.moquette.BrokerConstants.HTTP_SERVER_SECRET_KEY;
+import static io.moquette.BrokerConstants.HZ_Cluster_Node_External_IP;
+import static io.moquette.BrokerConstants.HZ_Cluster_Node_External_Long_Port;
+import static io.moquette.BrokerConstants.HZ_Cluster_Node_External_Short_Port;
+import static io.moquette.BrokerConstants.HZ_Cluster_Node_ID;
+import static io.moquette.BrokerConstants.TOKEN_EXPIRE_TIME;
 import static io.moquette.logging.LoggingUtils.getInterceptorIds;
+
+import com.hazelcast.config.ClasspathXmlConfig;
+import com.hazelcast.config.Config;
+import com.hazelcast.config.FileSystemXmlConfig;
+import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.HazelcastInstanceNotActiveException;
+import com.hazelcast.core.ISet;
+import com.xiaoleilu.loServer.LoServer;
+import com.xiaoleilu.loServer.ServerSetting;
+import com.xiaoleilu.loServer.action.admin.AdminAction;
 
 /**
  * Launch a configured version of the server.
  */
 public class Server {
+
+
+
     private final static String BANNER =
         "            _  _      _   __  _                    _             _   \n" +
-        " __      __(_)| |  __| | / _|(_) _ __  ___    ___ | |__    __ _ | |_ \n" +
-        " \\ \\ /\\ / /| || | / _` || |_ | || '__|/ _ \\  / __|| '_ \\  / _` || __|\n" +
-        "  \\ V  V / | || || (_| ||  _|| || |  |  __/ | (__ | | | || (_| || |_ \n" +
-        "   \\_/\\_/  |_||_| \\__,_||_|  |_||_|   \\___|  \\___||_| |_| \\__,_| \\__|\n";
-
+            " __      __(_)| |  __| | / _|(_) _ __  ___    ___ | |__    __ _ | |_ \n" +
+            " \\ \\ /\\ / /| || | / _` || |_ | || '__|/ _ \\  / __|| '_ \\  / _` || __|\n" +
+            "  \\ V  V / | || || (_| ||  _|| || |  |  __/ | (__ | | | || (_| || |_ \n" +
+            "   \\_/\\_/  |_||_| \\__,_||_|  |_||_|   \\___|  \\___||_| |_| \\__,_| \\__|\n";
 
     private static final Logger LOG = LoggerFactory.getLogger(Server.class);
 
@@ -407,14 +423,14 @@ public class Server {
         return hazelcastInstance;
     }
 
-    public void internalRpcMsg(String fromUser, String clientId, byte[] message, int messageId, String from, String request, boolean isAdmin) {
+    public void internalRpcMsg(String fromUser, String clientId, String section, byte[] message, int messageId, String from, String request, boolean isAdmin) {
 
         if (!m_initialized) {
             LOG.error("Moquette is not started, internal message cannot be notify");
             return;
         }
         LOG.debug("internalNotifyMsg");
-        m_processor.onRpcMsg(fromUser, clientId, message, messageId, from, request, isAdmin);
+        m_processor.onRpcMsg(fromUser, clientId, section, message, messageId, from, request, isAdmin);
     }
 
     public boolean isShutdowning() {

@@ -16,13 +16,14 @@
 
 package io.moquette.server.netty;
 
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.concurrent.EventExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Auto-flush data on channel after a read timeout. It's inspired by IdleStateHandler but it's
@@ -146,9 +147,9 @@ public class AutoFlushHandler extends ChannelDuplexHandler {
      */
     protected void channelIdle(ChannelHandlerContext ctx/* , IdleStateEvent evt */) throws Exception {
         // ctx.fireUserEventTriggered(evt);
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Flushing idle Netty channel. MqttClientId = {}.", NettyUtils.clientID(ctx.channel()));
-        }
+        // if (LOG.isDebugEnabled()) {
+        //     LOG.debug("Flushing idle Netty channel. MqttClientId = {}.", NettyUtils.clientID(ctx.channel()));
+        // }
         ctx.channel().flush();
     }
 

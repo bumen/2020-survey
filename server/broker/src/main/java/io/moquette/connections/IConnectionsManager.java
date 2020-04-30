@@ -17,6 +17,7 @@
 package io.moquette.connections;
 
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * This interface will be used by an external codebase to retrieve and close physical connections.
@@ -69,4 +70,6 @@ public interface IConnectionsManager {
      * @return
      */
     Collection<MqttSession> getSessions();
+
+    Set<String> getSectionClients(String section);
 }

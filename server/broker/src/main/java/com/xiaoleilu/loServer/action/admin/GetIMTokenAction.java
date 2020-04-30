@@ -8,22 +8,23 @@
 
 package com.xiaoleilu.loServer.action.admin;
 
+import java.util.Base64;
+import java.util.concurrent.Executor;
+
 import cn.wildfirechat.common.APIPath;
-import cn.wildfirechat.proto.WFCMessage;
-import com.xiaoleilu.loServer.annotation.HttpMethod;
-import com.xiaoleilu.loServer.annotation.Route;
-import com.xiaoleilu.loServer.handler.Request;
-import com.xiaoleilu.loServer.handler.Response;
+import cn.wildfirechat.common.ErrorCode;
 import cn.wildfirechat.pojos.InputGetToken;
 import cn.wildfirechat.pojos.OutputGetIMTokenData;
 import io.moquette.persistence.RPCCenter;
 import io.moquette.persistence.TargetEntry;
 import io.netty.handler.codec.http.FullHttpRequest;
-import cn.wildfirechat.common.ErrorCode;
 import win.liyufan.im.IMTopic;
 
-import java.util.Base64;
-import java.util.concurrent.Executor;
+import com.google.gson.Gson;
+import com.xiaoleilu.loServer.annotation.HttpMethod;
+import com.xiaoleilu.loServer.annotation.Route;
+import com.xiaoleilu.loServer.handler.Request;
+import com.xiaoleilu.loServer.handler.Response;
 
 @Route(APIPath.User_Get_Token)
 @HttpMethod("POST")
@@ -40,9 +41,11 @@ public class GetIMTokenAction extends AdminAction {
             InputGetToken input = getRequestBody(request.getNettyRequest(), InputGetToken.class);
             String userId = input.getUserId();
 
+            input.setSection("1");
 
-            WFCMessage.GetTokenRequest getTokenRequest = WFCMessage.GetTokenRequest.newBuilder().setUserId(userId).setClientId(input.getClientId()).setPlatform(input.getPlatform() == null ? 0 : input.getPlatform()).build();
-            RPCCenter.getInstance().sendRequest(userId, input.getClientId(), IMTopic.GetTokenTopic, getTokenRequest.toByteArray(), userId, TargetEntry.Type.TARGET_TYPE_USER, new RPCCenter.Callback() {
+            String data = new Gson().toJson(input);
+            // WFCMessage.GetTokenRequest getTokenRequest = WFCMessage.GetTokenRequest.newBuilder().setUserId(userId).setClientId(input.getClientId()).setPlatform(input.getPlatform() == null ? 0 : input.getPlatform()).build();
+            RPCCenter.getInstance().sendRequest(userId, input.getClientId(), "", IMTopic.GetTokenTopic, data.getBytes(), userId, TargetEntry.Type.TARGET_TYPE_USER, new RPCCenter.Callback() {
                 @Override
                 public void onSuccess(byte[] result) {
                     ErrorCode errorCode1 = ErrorCode.fromCode(result[0]);

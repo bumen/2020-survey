@@ -3,20 +3,20 @@ package cn.wildfirechat.pojos;
 public class InputGetToken {
     private String userId;
     private String clientId;
-    private Integer platform;
+    private String section;
 
-    public InputGetToken(String userId, String clientId, int platform) {
+    public InputGetToken(String userId, String clientId, String section) {
         this.userId = userId;
         this.clientId = clientId;
-        this.platform = platform;
+        this.section = section;
     }
 
-    public Integer getPlatform() {
-        return platform;
+    public String getSection() {
+        return section;
     }
 
-    public void setPlatform(Integer platform) {
-        this.platform = platform;
+    public void setSection(String section) {
+        this.section = section;
     }
 
     public String getUserId() {

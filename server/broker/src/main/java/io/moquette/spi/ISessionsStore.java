@@ -16,13 +16,13 @@
 
 package io.moquette.spi;
 
+import java.util.Collection;
+import java.util.Queue;
+
+import cn.wildfirechat.common.ErrorCode;
 import cn.wildfirechat.proto.WFCMessage;
 import io.moquette.persistence.MemorySessionStore.Session;
 import io.moquette.spi.IMessagesStore.StoredMessage;
-import cn.wildfirechat.common.ErrorCode;
-
-import java.util.Collection;
-import java.util.Queue;
 
 /**
  * Store used to handle the persistence of the subscriptions tree.
@@ -38,7 +38,7 @@ public interface ISessionsStore {
      */
     boolean contains(String clientID);
 
-    Session updateOrCreateUserSession(String username, String clientID, int platform);
+    Session updateOrCreateUserSession(String username, String clientID, String section);
 
     ErrorCode loadActiveSession(String username, String clientID);
 

@@ -8,27 +8,37 @@
 
 package com.xiaoleilu.loServer.action;
 
-import com.hazelcast.util.StringUtil;
-import com.xiaoleilu.loServer.annotation.HttpMethod;
-import com.xiaoleilu.loServer.annotation.RequireAuthentication;
-import com.xiaoleilu.loServer.annotation.Route;
-import com.xiaoleilu.loServer.handler.*;
-import io.moquette.server.config.MediaServerConfig;
-import io.moquette.spi.impl.security.AES;
-import io.moquette.spi.security.DES;
-import io.netty.buffer.ByteBuf;
-import io.netty.handler.codec.http.*;
-import io.netty.handler.codec.http.multipart.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.RandomAccessFile;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.UUID;
 
+import io.moquette.server.config.MediaServerConfig;
+import io.moquette.spi.security.DES;
+import io.netty.buffer.ByteBuf;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpContent;
+import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.LastHttpContent;
+import io.netty.handler.codec.http.multipart.Attribute;
+import io.netty.handler.codec.http.multipart.DefaultHttpDataFactory;
+import io.netty.handler.codec.http.multipart.FileUpload;
+import io.netty.handler.codec.http.multipart.HttpDataFactory;
+import io.netty.handler.codec.http.multipart.HttpPostRequestDecoder;
+import io.netty.handler.codec.http.multipart.InterfaceHttpData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import static com.xiaoleilu.loServer.handler.HttpResponseHelper.getFileExt;
+
+import com.hazelcast.util.StringUtil;
+import com.xiaoleilu.loServer.annotation.HttpMethod;
+import com.xiaoleilu.loServer.annotation.RequireAuthentication;
+import com.xiaoleilu.loServer.annotation.Route;
+import com.xiaoleilu.loServer.handler.Request;
+import com.xiaoleilu.loServer.handler.Response;
 
 @Route("/fs")
 @HttpMethod("POST")
@@ -87,7 +97,7 @@ public class UploadFileAction extends Action {
                 return true;
             }
 
-            multipartUpload(request, requestId, response);
+            // multipartUpload(request, requestId, response);
 
         }
         return true;

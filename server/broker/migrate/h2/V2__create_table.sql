@@ -32,6 +32,8 @@ DROP TABLE IF EXISTS `t_user`;
     `id` int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
     `_uid` varchar(64) NOT NULL,
     `_name` varchar(64) DEFAULT '',
+    `_section` varchar(64) DEFAULT '',
+    `_arena` varchar(64) DEFAULT '',
     `_display_name` varchar(64) DEFAULT '',
     `_gender` int(11) NOT NULL DEFAULT 0,
     `_portrait` varchar(1024) DEFAULT '',
@@ -49,6 +51,8 @@ DROP TABLE IF EXISTS `t_user`;
     UNIQUE INDEX `user_name_index` (`_name` ASC),
     INDEX `user_display_name_index` (`_display_name` ASC),
     INDEX `user_mobile_index` (`_mobile` ASC),
+    INDEX `user_section_index` (`_section` ASC),
+    INDEX `user_arena_index` (`_arena` ASC),
     INDEX `user_email_index` (`_email` ASC)
   );
 
@@ -147,6 +151,7 @@ CREATE TABLE `t_user_session` (
   `_phone_name` varchar(64) DEFAULT '',
   `_language` varchar(64) DEFAULT '',
   `_carrier_name` varchar(64) DEFAULT '',
+  `_section` varchar(64) DEFAULT '',
   `_dt` bigint(20) NOT NULL,
   UNIQUE INDEX `session_uid_cid_index` (`_cid`, `_uid`)
 );
@@ -197,4 +202,3 @@ DROP TABLE IF EXISTS `t_sensitiveword`;
 CREATE TABLE `t_sensitiveword` (
   `_word` TEXT DEFAULT NULL
 );
-

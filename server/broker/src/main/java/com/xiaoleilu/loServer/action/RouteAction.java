@@ -8,12 +8,11 @@
 
 package com.xiaoleilu.loServer.action;
 
+import java.util.Base64;
+import java.util.concurrent.Executor;
+
+import cn.wildfirechat.common.ErrorCode;
 import cn.wildfirechat.proto.WFCMessage;
-import com.google.protobuf.InvalidProtocolBufferException;
-import com.xiaoleilu.loServer.annotation.HttpMethod;
-import com.xiaoleilu.loServer.annotation.Route;
-import com.xiaoleilu.loServer.handler.Request;
-import com.xiaoleilu.loServer.handler.Response;
 import io.moquette.persistence.MemorySessionStore;
 import io.moquette.persistence.RPCCenter;
 import io.moquette.persistence.TargetEntry;
@@ -26,10 +25,12 @@ import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import cn.wildfirechat.common.ErrorCode;
 
-import java.util.Base64;
-import java.util.concurrent.Executor;
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.xiaoleilu.loServer.annotation.HttpMethod;
+import com.xiaoleilu.loServer.annotation.Route;
+import com.xiaoleilu.loServer.handler.Request;
+import com.xiaoleilu.loServer.handler.Response;
 
 @Route("/route")
 @HttpMethod("POST")
@@ -113,7 +114,7 @@ public class RouteAction extends Action {
                 if (userId == null) {
                     sendResponse(response, ErrorCode.ERROR_CODE_TOKEN_ERROR, null, base64Response);
                 } else {
-                    RPCCenter.getInstance().sendRequest(userId, wrapper.getClientId(), wrapper.getRequest(), wrapper.getData().toByteArray(), userId, TargetEntry.Type.TARGET_TYPE_USER, new RPCCenter.Callback() {
+                    RPCCenter.getInstance().sendRequest(userId, wrapper.getClientId(),"",  wrapper.getRequest(), wrapper.getData().toByteArray(), userId, TargetEntry.Type.TARGET_TYPE_USER, new RPCCenter.Callback() {
                         @Override
                         public void onSuccess(byte[] result) {
                             sendResponse(response, null, result, base64Response);

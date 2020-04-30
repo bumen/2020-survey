@@ -29,7 +29,7 @@ public class MultiCastMessageHandler extends IMHandler<WFCMessage.MultiCastMessa
 
 
     @Override
-    public ErrorCode action(ByteBuf ackPayload, String clientID, String fromUser, boolean isAdmin, WFCMessage.MultiCastMessage multiCastMessage, Qos1PublishHandler.IMCallback callback) {
+    public ErrorCode action(ByteBuf ackPayload, String clientID, String fromUser,String section,  boolean isAdmin, WFCMessage.MultiCastMessage multiCastMessage, Qos1PublishHandler.IMCallback callback) {
         ErrorCode errorCode = ErrorCode.ERROR_CODE_SUCCESS;
         if (!isAdmin) {
             return ErrorCode.ERROR_CODE_NOT_RIGHT;

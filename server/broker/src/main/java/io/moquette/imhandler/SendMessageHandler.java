@@ -8,26 +8,29 @@
 
 package io.moquette.imhandler;
 
+import java.util.Set;
+
+import cn.wildfirechat.common.ErrorCode;
 import cn.wildfirechat.proto.ProtoConstants;
 import cn.wildfirechat.proto.WFCMessage;
-import com.hazelcast.util.StringUtil;
 import io.moquette.BrokerConstants;
+import io.moquette.service.ArenaMessageService;
+import io.moquette.service.WorldMessageService;
 import io.moquette.spi.impl.Qos1PublishHandler;
 import io.netty.buffer.ByteBuf;
-import cn.wildfirechat.common.ErrorCode;
 import win.liyufan.im.IMTopic;
 import win.liyufan.im.MessageShardingUtil;
 import win.liyufan.im.Utility;
 
-import java.util.Set;
-
-import static cn.wildfirechat.proto.ProtoConstants.ContentType.Text;
+import com.hazelcast.util.StringUtil;
 
 @Handler(value = IMTopic.SendMessageTopic)
 public class SendMessageHandler extends IMHandler<WFCMessage.Message> {
+
     private int mSensitiveType = 0;  //命中敏感词时，0 失败，1 吞掉， 2 敏感词替换成*。
     private String mForwardUrl = null;
     private int mBlacklistStrategy = 0; //黑名单中时，0失败，1吞掉。
+
     public SendMessageHandler() {
         super();
 
@@ -37,14 +40,16 @@ public class SendMessageHandler extends IMHandler<WFCMessage.Message> {
         }
 
         try {
-            mSensitiveType = Integer.parseInt(mServer.getConfig().getProperty(BrokerConstants.SENSITIVE_Filter_Type));
+            mSensitiveType = Integer
+                .parseInt(mServer.getConfig().getProperty(BrokerConstants.SENSITIVE_Filter_Type));
         } catch (Exception e) {
             e.printStackTrace();
             Utility.printExecption(LOG, e);
         }
 
         try {
-            mBlacklistStrategy = Integer.parseInt(mServer.getConfig().getProperty(BrokerConstants.MESSAGE_Blacklist_Strategy));
+            mBlacklistStrategy = Integer.parseInt(
+                mServer.getConfig().getProperty(BrokerConstants.MESSAGE_Blacklist_Strategy));
         } catch (Exception e) {
             e.printStackTrace();
             Utility.printExecption(LOG, e);
@@ -52,24 +57,31 @@ public class SendMessageHandler extends IMHandler<WFCMessage.Message> {
     }
 
     @Override
-    public ErrorCode action(ByteBuf ackPayload, String clientID, String fromUser, boolean isAdmin, WFCMessage.Message message, Qos1PublishHandler.IMCallback callback) {
+    public ErrorCode action(ByteBuf ackPayload, String clientID, String fromUser, String section, boolean isAdmin,
+        WFCMessage.Message message, Qos1PublishHandler.IMCallback callback) {
         ErrorCode errorCode = ErrorCode.ERROR_CODE_SUCCESS;
         if (message != null) {
             boolean ignoreMsg = false;
+
+            int contentType = message.getContent().getType();
+            int conversationType = message.getConversation().getType();
             if (!isAdmin) {  //admin do not check the right
                 // 不能在端上直接发送撤回和群通知
-                if (message.getContent().getType() == 80 || (message.getContent().getType() >= 100 && message.getContent().getType() < 200)) {
+                if (contentType == 80 || (contentType >= 100 && contentType < 200)) {
                     return ErrorCode.INVALID_PARAMETER;
                 }
                 int userStatus = m_messagesStore.getUserStatus(fromUser);
-                if (userStatus == ProtoConstants.UserStatus.Muted || userStatus == ProtoConstants.UserStatus.Forbidden) {
+                if (userStatus == ProtoConstants.UserStatus.Muted
+                    || userStatus == ProtoConstants.UserStatus.Forbidden) {
                     return ErrorCode.ERROR_CODE_FORBIDDEN_SEND_MSG;
                 }
 
-                if (message.getConversation().getType() == ProtoConstants.ConversationType.ConversationType_Private) {
-                    errorCode = m_messagesStore.isAllowUserMessage(message.getConversation().getTarget(), fromUser);
+                if (conversationType  == ProtoConstants.ConversationType.ConversationType_Private) {
+                    errorCode = m_messagesStore
+                        .isAllowUserMessage(message.getConversation().getTarget(), fromUser);
                     if (errorCode != ErrorCode.ERROR_CODE_SUCCESS) {
-                        if (errorCode == ErrorCode.ERROR_CODE_IN_BLACK_LIST && mBlacklistStrategy != ProtoConstants.BlacklistStrategy.Message_Reject) {
+                        if (errorCode == ErrorCode.ERROR_CODE_IN_BLACK_LIST && mBlacklistStrategy
+                            != ProtoConstants.BlacklistStrategy.Message_Reject) {
                             ignoreMsg = true;
                             errorCode = ErrorCode.ERROR_CODE_SUCCESS;
                         } else {
@@ -77,23 +89,27 @@ public class SendMessageHandler extends IMHandler<WFCMessage.Message> {
                         }
                     }
 
-                    userStatus = m_messagesStore.getUserStatus(message.getConversation().getTarget());
+                    userStatus = m_messagesStore
+                        .getUserStatus(message.getConversation().getTarget());
                     if (userStatus == ProtoConstants.UserStatus.Forbidden) {
                         return ErrorCode.ERROR_CODE_USER_FORBIDDEN;
                     }
                 }
 
-                if (message.getConversation().getType() == ProtoConstants.ConversationType.ConversationType_Group ) {
-                    errorCode = m_messagesStore.canSendMessageInGroup(fromUser, message.getConversation().getTarget());
+                if (conversationType == ProtoConstants.ConversationType.ConversationType_Group) {
+                    errorCode = m_messagesStore
+                        .canSendMessageInGroup(fromUser, message.getConversation().getTarget());
                     if (errorCode != ErrorCode.ERROR_CODE_SUCCESS) {
                         return errorCode;
                     }
-                } else if (message.getConversation().getType() == ProtoConstants.ConversationType.ConversationType_ChatRoom) {
-                    if(!m_messagesStore.checkUserClientInChatroom(fromUser, clientID, message.getConversation().getTarget())) {
+                } else if (conversationType == ProtoConstants.ConversationType.ConversationType_ChatRoom) {
+                    if (!m_messagesStore.checkUserClientInChatroom(fromUser, clientID,
+                        message.getConversation().getTarget())) {
                         return ErrorCode.ERROR_CODE_NOT_IN_CHATROOM;
                     }
-                } else if (message.getConversation().getType() == ProtoConstants.ConversationType.ConversationType_Channel) {
-                    if(!m_messagesStore.checkUserInChannel(fromUser, message.getConversation().getTarget())) {
+                } else if (conversationType == ProtoConstants.ConversationType.ConversationType_Channel) {
+                    if (!m_messagesStore
+                        .checkUserInChannel(fromUser, message.getConversation().getTarget())) {
                         return ErrorCode.ERROR_CODE_NOT_IN_CHANNEL;
                     }
                 }
@@ -101,36 +117,45 @@ public class SendMessageHandler extends IMHandler<WFCMessage.Message> {
 
             long timestamp = System.currentTimeMillis();
             long messageId = MessageShardingUtil.generateId();
-            message = message.toBuilder().setFromUser(fromUser).setMessageId(messageId).setServerTimestamp(timestamp).build();
+            message = message.toBuilder().setFromUser(fromUser).setMessageId(messageId)
+                .setServerTimestamp(timestamp).build();
 
             if (mForwardUrl != null) {
                 publisher.forwardMessage(message, mForwardUrl);
             }
 
-
             if (!isAdmin) {
-                Set<String> matched = m_messagesStore.handleSensitiveWord(message.getContent().getSearchableContent());
+                Set<String> matched = m_messagesStore
+                    .handleSensitiveWord(message.getContent().getSearchableContent());
                 if (matched != null && !matched.isEmpty()) {
                     m_messagesStore.storeSensitiveMessage(message);
                     if (mSensitiveType == 0) {
                         errorCode = ErrorCode.ERROR_CODE_SENSITIVE_MATCHED;
-                    } else if(mSensitiveType == 1) {
+                    } else if (mSensitiveType == 1) {
                         ignoreMsg = true;
-                    } else if(mSensitiveType == 2) {
+                    } else if (mSensitiveType == 2) {
                         String text = message.getContent().getSearchableContent();
                         for (String word : matched) {
                             text = text.replace(word, "***");
                         }
 
-                        message = message.toBuilder().setContent(message.getContent().toBuilder().setSearchableContent(text).build()).build();
-                    } else if(mSensitiveType == 3) {
+                        message = message.toBuilder().setContent(
+                            message.getContent().toBuilder().setSearchableContent(text).build())
+                            .build();
+                    } else if (mSensitiveType == 3) {
 
                     }
                 }
             }
 
             if (errorCode == ErrorCode.ERROR_CODE_SUCCESS) {
-                saveAndPublish(fromUser, clientID, message, ignoreMsg);
+                if (conversationType == ProtoConstants.ConversationType.ConversationType_WORLD) {
+                    WorldMessageService.INSTANCE.sendMessage(fromUser, clientID, section, message);
+                } else if (conversationType == ProtoConstants.ConversationType.ConversationType_ARENA) {
+                    ArenaMessageService.INSTANCE.sendMessage(fromUser, clientID, section, message);
+                } else {
+                    saveAndPublish(fromUser, clientID, message, ignoreMsg);
+                }
                 ackPayload = ackPayload.capacity(20);
                 ackPayload.writeLong(messageId);
                 ackPayload.writeLong(timestamp);

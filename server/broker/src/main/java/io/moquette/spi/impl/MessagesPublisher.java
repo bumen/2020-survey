@@ -16,39 +16,43 @@
 
 package io.moquette.spi.impl;
 
-import cn.wildfirechat.proto.ProtoConstants;
-import cn.wildfirechat.proto.WFCMessage;
-import cn.wildfirechat.push.PushServer;
-import com.google.gson.Gson;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.util.StringUtil;
-import cn.wildfirechat.pojos.OutputNotifyChannelSubscribeStatus;
-import cn.wildfirechat.pojos.SendMessageData;
-import com.xiaoleilu.hutool.system.UserInfo;
-import com.xiaoleilu.loServer.model.FriendData;
-import io.moquette.persistence.*;
-import io.moquette.persistence.MemorySessionStore.Session;
-import io.moquette.server.ConnectionDescriptorStore;
-import io.moquette.spi.IMessagesStore;
-import io.moquette.spi.ISessionsStore;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
-import io.netty.handler.codec.mqtt.*;
-import win.liyufan.im.HttpUtils;
-import win.liyufan.im.IMTopic;
-
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import win.liyufan.im.Utility;
-
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.BiFunction;
 
+import cn.wildfirechat.pojos.OutputNotifyChannelSubscribeStatus;
+import cn.wildfirechat.pojos.SendMessageData;
+import cn.wildfirechat.proto.ProtoConstants;
+import cn.wildfirechat.proto.WFCMessage;
+import cn.wildfirechat.push.PushServer;
+import io.moquette.persistence.MemorySessionStore.Session;
+import io.moquette.persistence.UserClientEntry;
+import io.moquette.server.ConnectionDescriptorStore;
+import io.moquette.spi.IMessagesStore;
+import io.moquette.spi.ISessionsStore;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.mqtt.MqttFixedHeader;
+import io.netty.handler.codec.mqtt.MqttMessageType;
+import io.netty.handler.codec.mqtt.MqttPublishMessage;
+import io.netty.handler.codec.mqtt.MqttPublishVariableHeader;
+import io.netty.handler.codec.mqtt.MqttQoS;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import win.liyufan.im.HttpUtils;
+import win.liyufan.im.IMTopic;
+import win.liyufan.im.Utility;
+
 import static cn.wildfirechat.proto.ProtoConstants.PersistFlag.Transparent;
+
+import com.google.gson.Gson;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.util.StringUtil;
+import com.xiaoleilu.loServer.model.FriendData;
 
 public class MessagesPublisher {
     private static final Logger LOG = LoggerFactory.getLogger(MessagesPublisher.class);
@@ -96,7 +100,7 @@ public class MessagesPublisher {
     }
 
     public MessagesPublisher(ConnectionDescriptorStore connectionDescriptors, ISessionsStore sessionsStore,
-                             PersistentQueueMessageSender messageSender, HazelcastInstance hz, IMessagesStore messagesStore) {
+                             PersistentQueueMessageSender messageSender, HazelcastInstance hz, IMessagesStore messagesStore){
         this.connectionDescriptors = connectionDescriptors;
         this.m_sessionsStore = sessionsStore;
         this.messageSender = messageSender;
@@ -104,7 +108,7 @@ public class MessagesPublisher {
         this.startChatroomScheduler();
     }
 
-    static MqttPublishMessage notRetainedPublish(String topic, MqttQoS qos, ByteBuf message) {
+     public static MqttPublishMessage notRetainedPublish(String topic, MqttQoS qos, ByteBuf message) {
         return notRetainedPublishWithMessageId(topic, qos, message, 0);
     }
 
@@ -557,5 +561,9 @@ public class MessagesPublisher {
             return;
         }
         executorCallback.execute(() -> HttpUtils.httpJsonPost(channelInfo.getCallback() + "/subscribe", new Gson().toJson(new OutputNotifyChannelSubscribeStatus(user, channelInfo.getTargetId(), listen), OutputNotifyChannelSubscribeStatus.class)));
+    }
+
+    public boolean sendPublish(String clientId, MqttPublishMessage publishMsg) {
+      return this.messageSender.sendPublish(clientId, publishMsg);
     }
 }

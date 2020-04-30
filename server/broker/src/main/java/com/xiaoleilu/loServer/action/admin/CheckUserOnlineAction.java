@@ -8,26 +8,22 @@
 
 package com.xiaoleilu.loServer.action.admin;
 
+import java.util.concurrent.Executor;
+
 import cn.wildfirechat.common.APIPath;
-import cn.wildfirechat.pojos.BroadMessageResult;
+import cn.wildfirechat.common.ErrorCode;
+import cn.wildfirechat.pojos.InputGetUserInfo;
 import cn.wildfirechat.pojos.OutputCheckUserOnline;
+import io.moquette.persistence.RPCCenter;
+import io.moquette.persistence.TargetEntry;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.util.internal.StringUtil;
+
 import com.google.gson.Gson;
-import com.xiaoleilu.loServer.RestResult;
 import com.xiaoleilu.loServer.annotation.HttpMethod;
 import com.xiaoleilu.loServer.annotation.Route;
 import com.xiaoleilu.loServer.handler.Request;
 import com.xiaoleilu.loServer.handler.Response;
-import cn.wildfirechat.pojos.InputGetUserInfo;
-import io.moquette.persistence.RPCCenter;
-import io.moquette.persistence.TargetEntry;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
-import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.HttpResponseStatus;
-import io.netty.util.internal.StringUtil;
-import cn.wildfirechat.common.ErrorCode;
-
-import java.util.concurrent.Executor;
 
 @Route(APIPath.User_Get_Online_Status)
 @HttpMethod("POST")
@@ -43,7 +39,7 @@ public class CheckUserOnlineAction extends AdminAction {
         if (request.getNettyRequest() instanceof FullHttpRequest) {
             InputGetUserInfo inputUserId = getRequestBody(request.getNettyRequest(), InputGetUserInfo.class);
             if (inputUserId == null || !StringUtil.isNullOrEmpty(inputUserId.getUserId())) {
-                RPCCenter.getInstance().sendRequest(null, null, RPCCenter.CHECK_USER_ONLINE_REQUEST, inputUserId.getUserId().getBytes(), inputUserId.getUserId(), TargetEntry.Type.TARGET_TYPE_USER, new RPCCenter.Callback() {
+                RPCCenter.getInstance().sendRequest(null, null, "", RPCCenter.CHECK_USER_ONLINE_REQUEST, inputUserId.getUserId().getBytes(), inputUserId.getUserId(), TargetEntry.Type.TARGET_TYPE_USER, new RPCCenter.Callback() {
                     @Override
                     public void onSuccess(byte[] res) {
                         OutputCheckUserOnline out = new Gson().fromJson(new String(res), OutputCheckUserOnline.class);

@@ -20,7 +20,7 @@ import static cn.wildfirechat.common.ErrorCode.ERROR_CODE_SUCCESS;
 @Handler(IMTopic.SetGroupManagerTopic)
 public class SetGroupManagerHandler extends GroupHandler<WFCMessage.SetGroupManagerRequest> {
     @Override
-    public ErrorCode action(ByteBuf ackPayload, String clientID, String fromUser, boolean isAdmin, WFCMessage.SetGroupManagerRequest request, Qos1PublishHandler.IMCallback callback) {
+    public ErrorCode action(ByteBuf ackPayload, String clientID, String fromUser,String section,  boolean isAdmin, WFCMessage.SetGroupManagerRequest request, Qos1PublishHandler.IMCallback callback) {
         ErrorCode errorCode = m_messagesStore.setGroupManager(fromUser, request.getGroupId(), request.getType(), request.getUserIdList(), isAdmin);
         if (errorCode == ERROR_CODE_SUCCESS) {
             if (request.hasNotifyContent() && request.getNotifyContent().getType() > 0) {

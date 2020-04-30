@@ -19,7 +19,7 @@ import io.netty.buffer.ByteBuf;
 @Handler("GMUT")
 public class GetMediaUploadTokenHandler extends IMHandler<WFCMessage.GetUploadTokenRequest> {
     @Override
-    public ErrorCode action(ByteBuf ackPayload, String clientID, String fromUser, boolean isAdmin, WFCMessage.GetUploadTokenRequest request, Qos1PublishHandler.IMCallback callback) {
+    public ErrorCode action(ByteBuf ackPayload, String clientID, String fromUser, String section, boolean isAdmin, WFCMessage.GetUploadTokenRequest request, Qos1PublishHandler.IMCallback callback) {
         int type = request.getMediaType();
 
         String token;

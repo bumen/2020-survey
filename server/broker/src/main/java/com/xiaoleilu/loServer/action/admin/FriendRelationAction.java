@@ -8,15 +8,12 @@
 
 package com.xiaoleilu.loServer.action.admin;
 
+import java.util.concurrent.Executor;
+
 import cn.wildfirechat.common.APIPath;
-import cn.wildfirechat.proto.WFCMessage;
-import com.google.gson.Gson;
-import com.xiaoleilu.loServer.RestResult;
-import com.xiaoleilu.loServer.annotation.HttpMethod;
-import com.xiaoleilu.loServer.annotation.Route;
-import com.xiaoleilu.loServer.handler.Request;
-import com.xiaoleilu.loServer.handler.Response;
+import cn.wildfirechat.common.ErrorCode;
 import cn.wildfirechat.pojos.InputFriendRequest;
+import cn.wildfirechat.proto.WFCMessage;
 import io.moquette.persistence.RPCCenter;
 import io.moquette.persistence.TargetEntry;
 import io.netty.buffer.ByteBuf;
@@ -24,10 +21,14 @@ import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.util.internal.StringUtil;
-import cn.wildfirechat.common.ErrorCode;
 import win.liyufan.im.IMTopic;
 
-import java.util.concurrent.Executor;
+import com.google.gson.Gson;
+import com.xiaoleilu.loServer.RestResult;
+import com.xiaoleilu.loServer.annotation.HttpMethod;
+import com.xiaoleilu.loServer.annotation.Route;
+import com.xiaoleilu.loServer.handler.Request;
+import com.xiaoleilu.loServer.handler.Response;
 
 @Route(APIPath.Friend_Update_Status)
 @HttpMethod("POST")
@@ -50,7 +51,7 @@ public class FriendRelationAction extends AdminAction {
                 if (!StringUtil.isNullOrEmpty(friendAdd.getExtra())) {
                     friendRequestBuilder = friendRequestBuilder.setExtra(friendAdd.getExtra());
                 }
-                RPCCenter.getInstance().sendRequest(friendAdd.getUserId(), null, IMTopic.HandleFriendRequestTopic, friendRequestBuilder.build().toByteArray(), friendAdd.getFriendUid(), TargetEntry.Type.TARGET_TYPE_USER, new RPCCenter.Callback() {
+                RPCCenter.getInstance().sendRequest(friendAdd.getUserId(), null, "", IMTopic.HandleFriendRequestTopic, friendRequestBuilder.build().toByteArray(), friendAdd.getFriendUid(), TargetEntry.Type.TARGET_TYPE_USER, new RPCCenter.Callback() {
                     @Override
                     public void onSuccess(byte[] result) {
                         ByteBuf byteBuf = Unpooled.buffer();

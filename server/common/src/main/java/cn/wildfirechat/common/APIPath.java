@@ -17,6 +17,8 @@ public interface APIPath {
     String Sensitive_Query = "/admin/sensitive/query";
 
     String Create_User = "/admin/user/create";
+    String Login_User = "/admin/user/login";
+    String Modify_User = "/admin/user/modify";
     String Destroy_User = "/admin/user/destroy";
     String Create_Robot = "/admin/robot/create";
     String User_Get_Token = "/admin/user/get_token";

@@ -8,16 +8,12 @@
 
 package com.xiaoleilu.loServer.action.admin;
 
+import java.util.concurrent.Executor;
+
 import cn.wildfirechat.common.APIPath;
 import cn.wildfirechat.common.ErrorCode;
-import cn.wildfirechat.pojos.*;
-import cn.wildfirechat.proto.WFCMessage;
-import com.google.gson.Gson;
-import com.xiaoleilu.loServer.RestResult;
-import com.xiaoleilu.loServer.annotation.HttpMethod;
-import com.xiaoleilu.loServer.annotation.Route;
-import com.xiaoleilu.loServer.handler.Request;
-import com.xiaoleilu.loServer.handler.Response;
+import cn.wildfirechat.pojos.InputCreateChannel;
+import cn.wildfirechat.pojos.OutputCreateChannel;
 import io.moquette.persistence.RPCCenter;
 import io.moquette.persistence.TargetEntry;
 import io.netty.buffer.ByteBuf;
@@ -26,9 +22,13 @@ import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.util.internal.StringUtil;
 import win.liyufan.im.IMTopic;
-import win.liyufan.im.UUIDGenerator;
 
-import java.util.concurrent.Executor;
+import com.google.gson.Gson;
+import com.xiaoleilu.loServer.RestResult;
+import com.xiaoleilu.loServer.annotation.HttpMethod;
+import com.xiaoleilu.loServer.annotation.Route;
+import com.xiaoleilu.loServer.handler.Request;
+import com.xiaoleilu.loServer.handler.Response;
 
 @Route(APIPath.Create_Channel)
 @HttpMethod("POST")
@@ -52,7 +52,7 @@ public class CreateChannelAction extends AdminAction {
                     inputCreateChannel.setTargetId(messagesStore.getShortUUID());
                 }
 
-                RPCCenter.getInstance().sendRequest(inputCreateChannel.getOwner(), null, IMTopic.CreateChannelTopic, inputCreateChannel.toProtoChannelInfo().toByteArray(), inputCreateChannel.getOwner(), TargetEntry.Type.TARGET_TYPE_USER, new RPCCenter.Callback() {
+                RPCCenter.getInstance().sendRequest(inputCreateChannel.getOwner(), null, "", IMTopic.CreateChannelTopic, inputCreateChannel.toProtoChannelInfo().toByteArray(), inputCreateChannel.getOwner(), TargetEntry.Type.TARGET_TYPE_USER, new RPCCenter.Callback() {
                     @Override
                     public void onSuccess(byte[] result) {
                         ByteBuf byteBuf = Unpooled.buffer();

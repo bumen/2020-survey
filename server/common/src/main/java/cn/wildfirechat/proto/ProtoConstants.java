@@ -4,11 +4,21 @@ public class ProtoConstants {
 
     //message Conversation -> type
     public interface ConversationType {
+        // 密聊
         int ConversationType_Private = 0;
+        // 讨论组
         int ConversationType_Group = 1;
         int ConversationType_ChatRoom = 2;
         int ConversationType_Channel = 3;
         int ConversationType_Thing = 4;
+        // 世界频道
+        int ConversationType_WORLD = 5;
+        // 区域频道
+        int ConversationType_ARENA = 6;
+        // 战场频道
+        int ConversationType_BATTLE = 7;
+        // 联盟频道
+        int ConversationType_UNION = 8;
     }
 
     //message GroupInfo -> type
@@ -54,6 +64,8 @@ public class ProtoConstants {
         int Pull_Normal = 0;
         int Pull_ChatRoom = 1;
         int Pull_Group = 2;
+        int Pull_World = 3;
+        int Pull_Arena = 4;
     }
 
     //message UserResult -> code

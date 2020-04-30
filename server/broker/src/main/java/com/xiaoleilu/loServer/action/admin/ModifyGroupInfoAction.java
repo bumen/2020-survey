@@ -9,16 +9,11 @@
 package com.xiaoleilu.loServer.action.admin;
 
 
+import java.util.concurrent.Executor;
+
 import cn.wildfirechat.common.APIPath;
 import cn.wildfirechat.common.ErrorCode;
-import cn.wildfirechat.pojos.InputAddGroupMember;
 import cn.wildfirechat.pojos.InputModifyGroupInfo;
-import com.google.gson.Gson;
-import com.xiaoleilu.loServer.RestResult;
-import com.xiaoleilu.loServer.annotation.HttpMethod;
-import com.xiaoleilu.loServer.annotation.Route;
-import com.xiaoleilu.loServer.handler.Request;
-import com.xiaoleilu.loServer.handler.Response;
 import io.moquette.persistence.RPCCenter;
 import io.moquette.persistence.TargetEntry;
 import io.netty.buffer.ByteBuf;
@@ -27,7 +22,12 @@ import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import win.liyufan.im.IMTopic;
 
-import java.util.concurrent.Executor;
+import com.google.gson.Gson;
+import com.xiaoleilu.loServer.RestResult;
+import com.xiaoleilu.loServer.annotation.HttpMethod;
+import com.xiaoleilu.loServer.annotation.Route;
+import com.xiaoleilu.loServer.handler.Request;
+import com.xiaoleilu.loServer.handler.Response;
 
 @Route(APIPath.Group_Modify_Info)
 @HttpMethod("POST")
@@ -43,7 +43,7 @@ public class ModifyGroupInfoAction extends AdminAction {
         if (request.getNettyRequest() instanceof FullHttpRequest) {
             InputModifyGroupInfo inputAddGroupMember = getRequestBody(request.getNettyRequest(), InputModifyGroupInfo.class);
             if (inputAddGroupMember.isValide()) {
-                RPCCenter.getInstance().sendRequest(inputAddGroupMember.getOperator(), null, IMTopic.ModifyGroupInfoTopic, inputAddGroupMember.toProtoGroupRequest().toByteArray(), inputAddGroupMember.getOperator(), TargetEntry.Type.TARGET_TYPE_USER, new RPCCenter.Callback() {
+                RPCCenter.getInstance().sendRequest(inputAddGroupMember.getOperator(), null, "", IMTopic.ModifyGroupInfoTopic, inputAddGroupMember.toProtoGroupRequest().toByteArray(), inputAddGroupMember.getOperator(), TargetEntry.Type.TARGET_TYPE_USER, new RPCCenter.Callback() {
                     @Override
                     public void onSuccess(byte[] result) {
                         ByteBuf byteBuf = Unpooled.buffer();

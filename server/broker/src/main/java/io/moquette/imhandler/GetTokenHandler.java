@@ -8,19 +8,19 @@
 
 package io.moquette.imhandler;
 
-import cn.wildfirechat.proto.WFCMessage;
+import cn.wildfirechat.common.ErrorCode;
+import cn.wildfirechat.pojos.InputGetToken;
 import io.moquette.persistence.MemorySessionStore;
 import io.moquette.spi.impl.Qos1PublishHandler;
 import io.moquette.spi.impl.security.TokenAuthenticator;
 import io.netty.buffer.ByteBuf;
-import cn.wildfirechat.common.ErrorCode;
 import win.liyufan.im.IMTopic;
 
 @Handler(IMTopic.GetTokenTopic)
-public class GetTokenHandler extends IMHandler<WFCMessage.GetTokenRequest> {
+public class GetTokenHandler extends IMHandler<InputGetToken> {
     @Override
-    public ErrorCode action(ByteBuf ackPayload, String clientID, String fromUser, boolean isAdmin, WFCMessage.GetTokenRequest request, Qos1PublishHandler.IMCallback callback) {
-        MemorySessionStore.Session session = m_sessionsStore.updateOrCreateUserSession(fromUser, clientID, request.getPlatform());
+    public ErrorCode action(ByteBuf ackPayload, String clientID, String fromUser,String section,  boolean isAdmin, InputGetToken request, Qos1PublishHandler.IMCallback callback) {
+        MemorySessionStore.Session session = m_sessionsStore.updateOrCreateUserSession(fromUser, clientID, request.getSection());
         TokenAuthenticator authenticator = new TokenAuthenticator();
         String strToken = authenticator.generateToken(fromUser);
         String result = strToken + "|" + session.getSecret() + "|" + session.getDbSecret();

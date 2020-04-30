@@ -22,3 +22,24 @@ CREATE TABLE `t_user_messages` (
     `_dt` DATETIME NOT NULL DEFAULT NOW(),
     UNIQUE INDEX `message_seq_uid_index` (`_uid` DESC, `_seq` DESC)
 );
+
+
+DROP TABLE IF EXISTS `t_world_messages`;
+CREATE TABLE `t_world_messages` (
+    `id` int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    `_mid` bigint(20) NOT NULL,
+    `_world_id` varchar(64) NOT NULL,
+    `_seq` bigint(20) NOT NULL,
+    `_dt` DATETIME NOT NULL DEFAULT NOW(),
+    UNIQUE INDEX `message_seq_world_id_index` (`_world_id` DESC, `_seq` DESC)
+);
+
+DROP TABLE IF EXISTS `t_arena_messages`;
+CREATE TABLE `t_arena_messages` (
+    `id` int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    `_mid` bigint(20) NOT NULL,
+    `_arena_id` varchar(64) NOT NULL,
+    `_seq` bigint(20) NOT NULL,
+    `_dt` DATETIME NOT NULL DEFAULT NOW(),
+    UNIQUE INDEX `message_seq_arean_id_index` (`_arena_id` DESC, `_seq` DESC)
+);
