@@ -2,18 +2,30 @@
 <Configuration status="INFO" monitorInterval="60" shutdownHook="disable">
     <Properties>
         <Property name="LOG_PREFIX">${sys:logging.path}/java-im</Property>
-        <Property name="NET_LOG_PREFIX">${sys:logging.path}/java-http</Property>
-        <Property name="BUSINESS_LOG_PREFIX">${sys:logging.path}/java-mqtt</Property>
+        <Property name="HTTP_LOG_PREFIX">${sys:logging.path}/java-http</Property>
+        <Property name="MQTT_LOG_PREFIX">${sys:logging.path}/java-mqtt</Property>
         <Property name="SERVER_LOG_PREFIX">${sys:logging.path}/java-server</Property>
+        <Property name="DB_LOG_PREFIX">${sys:logging.path}/java-db</Property>
         <Property name="PATTERN_SUFFIX">-%d{yyyyMMdd}.log</Property>
     </Properties>
 
     <Appenders>
+        <RollingRandomAccessFile name="DB"
+            fileName="${DB_LOG_PREFIX}.log"
+            filePattern="${DB_LOG_PREFIX}${PATTERN_SUFFIX}"
+            immediateFlush="false">
+            <PatternLayout pattern="%d [%-5p][%t] %c - [%X{MQTT-TraceId},%X{MQTT-UserId}] %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+            </Policies>
+            <DefaultRolloverStrategy max="10"/>
+        </RollingRandomAccessFile>
+
         <RollingRandomAccessFile name="HTTP"
-          fileName="${NET_LOG_PREFIX}.log"
-          filePattern="${NET_LOG_PREFIX}${PATTERN_SUFFIX}"
+          fileName="${HTTP_LOG_PREFIX}.log"
+          filePattern="${HTTP_LOG_PREFIX}${PATTERN_SUFFIX}"
           immediateFlush="false">
-            <PatternLayout pattern="%d [%-5p][%t] %c - [%X{traceId},%X{SOFA-SpanId}] %m%n"/>
+            <PatternLayout pattern="%d [%-5p][%t] %c - [%X{MQTT-TraceId},%X{MQTT-UserId}] %m%n"/>
             <Policies>
                 <TimeBasedTriggeringPolicy interval="1"/>
             </Policies>
@@ -21,10 +33,10 @@
         </RollingRandomAccessFile>
 
         <RollingRandomAccessFile name="MQTT"
-          fileName="${BUSINESS_LOG_PREFIX}.log"
-          filePattern="${BUSINESS_LOG_PREFIX}${PATTERN_SUFFIX}"
+          fileName="${MQTT_LOG_PREFIX}.log"
+          filePattern="${MQTT_LOG_PREFIX}${PATTERN_SUFFIX}"
           immediateFlush="false">
-            <PatternLayout pattern="%d [%-5p][%t] %c - [%X{traceId},%X{SOFA-SpanId}] %m%n"/>
+            <PatternLayout pattern="%d [%-5p][%t] %c - [%X{MQTT-TraceId},%X{MQTT-UserId}] %m%n"/>
             <Policies>
                 <TimeBasedTriggeringPolicy interval="1"/>
             </Policies>
@@ -35,7 +47,7 @@
           fileName="${SERVER_LOG_PREFIX}.log"
           filePattern="${SERVER_LOG_PREFIX}${PATTERN_SUFFIX}"
           immediateFlush="false">
-            <PatternLayout pattern="%d [%-5p][%t] %c - [%X{traceId},%X{SOFA-SpanId}] %m%n"/>
+            <PatternLayout pattern="%d [%-5p][%t] %c - [%X{MQTT-TraceId},%X{MQTT-UserId}] %m%n"/>
             <Policies>
                 <TimeBasedTriggeringPolicy interval="1"/>
             </Policies>
@@ -46,7 +58,7 @@
                                  fileName="${LOG_PREFIX}.log"
                                  filePattern="${LOG_PREFIX}${PATTERN_SUFFIX}"
                                  immediateFlush="false">
-            <PatternLayout pattern="%d [%-5p][%t] %c - [%X{traceId},%X{SOFA-SpanId}] %m%n"/>
+            <PatternLayout pattern="%d [%-5p][%t] %c - [%X{MQTT-TraceId},%X{MQTT-UserId}] %m%n"/>
             <Policies>
                 <TimeBasedTriggeringPolicy interval="1"/>
             </Policies>
@@ -57,7 +69,7 @@
                                  fileName="${LOG_PREFIX}-error.log"
                                  filePattern="${LOG_PREFIX}-error${PATTERN_SUFFIX}">
             <ThresholdFilter level="WARN" onMatch="ACCEPT" onMismatch="DENY"/>
-            <PatternLayout pattern="%d [%-5p][%t] %c - [%X{traceId},%X{SOFA-SpanId}] %m%n"/>
+            <PatternLayout pattern="%d [%-5p][%t] %c - [%X{MQTT-TraceId},%X{MQTT-UserId}] %m%n"/>
             <Policies>
                 <TimeBasedTriggeringPolicy interval="1"/>
             </Policies>
@@ -69,13 +81,18 @@
             <AppenderRef ref="LOGFILEERROR"/>
         </Async>
 
-        <Async name="NET_LOGASYNC">
-            <AppenderRef ref="NET"/>
+        <Async name="DB_LOGASYNC">
+            <AppenderRef ref="DB"/>
             <AppenderRef ref="LOGFILEERROR"/>
         </Async>
 
-        <Async name="BUSINESS_LOGASYNC">
-            <AppenderRef ref="BUSINESS"/>
+        <Async name="HTTP_LOGASYNC">
+            <AppenderRef ref="HTTP"/>
+            <AppenderRef ref="LOGFILEERROR"/>
+        </Async>
+
+        <Async name="MQTT_LOGASYNC">
+            <AppenderRef ref="MQTT"/>
             <AppenderRef ref="LOGFILEERROR"/>
         </Async>
 
@@ -87,21 +104,31 @@
     </Appenders>
 
     <Loggers>
-        <Logger name="NET" level="INFO" additivity="false">
-            <AppenderRef ref="NET_LOGASYNC"/>
+        <Logger name="HTTP" level="INFO" additivity="false">
+            <AppenderRef ref="HTTP_LOGASYNC"/>
         </Logger>
 
-        <Logger name="BUSINESS" level="INFO" additivity="false">
-            <AppenderRef ref="BUSINESS_LOGASYNC"/>
+        <Logger name="DB" level="INFO" additivity="false">
+            <AppenderRef ref="DB_LOGASYNC"/>
+        </Logger>
+
+        <Logger name="MQTT" level="INFO" additivity="false">
+            <AppenderRef ref="MQTT_LOGASYNC"/>
         </Logger>
 
         <Logger name="SERVER" level="debug" additivity="false">
             <AppenderRef ref="SERVER_LOGASYNC"/>
         </Logger>
 
-        <Logger name="com.playcrab" level="INFO" additivity="false">
+        <Logger name="io.moquette" level="INFO" additivity="false">
             <AppenderRef ref="LOGASYNC"/>
         </Logger>
+
+        <Logger name="com.xiaoleilu" level="INFO" additivity="false">
+            <AppenderRef ref="LOGASYNC"/>
+        </Logger>
+
+        <Logger name="io.netty.channel" level="error"/>
 
         <Root level="INFO">
             <AppenderRef ref="LOGASYNC"/>

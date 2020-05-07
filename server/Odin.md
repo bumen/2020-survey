@@ -17,9 +17,15 @@
  * broker启动
    + 启动参数：参考distribution项目下的sh
    ```
+     -- mac
      -Dwildfirechat.path=/Users/playcrab/data/project/bmn/survey/server/broker/
      -Dlog4j.configuration=file:/Users/playcrab/data/project/bmn/survey/server/broker/config/log4j.properties
      -Dhazelcast.configuration=file:/Users/playcrab/data/project/bmn/survey/server/broker/config/hazelcast.xml
+     
+     -- windows
+     -Dwildfirechat.path=E:/project/bmn/2020-survey/server/broker
+     -Dlog4j.configurationFile=config/log4j2-test.xml
+     -Dlogging.path=logs
     ```
  * h2db web 界面启动
    + 获取：h2-version.jar

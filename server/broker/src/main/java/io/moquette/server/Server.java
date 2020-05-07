@@ -119,7 +119,7 @@ public class Server {
 
     private IStore m_store;
     static {
-        System.out.println(BANNER);
+        LOG.info(BANNER);
     }
 
     public static void start(String[] args) throws IOException {
