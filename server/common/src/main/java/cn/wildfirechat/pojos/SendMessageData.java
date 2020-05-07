@@ -8,17 +8,25 @@
 
 package cn.wildfirechat.pojos;
 
-import cn.wildfirechat.proto.ProtoConstants;
+import java.util.List;
+
 import cn.wildfirechat.proto.WFCMessage;
 import io.netty.util.internal.StringUtil;
 
-import java.util.List;
-
 public class SendMessageData {
     private String sender;
+    private String section;
     private Conversation conv;
     private MessagePayload payload;
     private List<String> toUsers;
+
+    public String getSection() {
+        return section;
+    }
+
+    public void setSection(String section) {
+        this.section = section;
+    }
 
     public String getSender() {
         return sender;
@@ -56,7 +64,7 @@ public class SendMessageData {
         if(sendMessageData == null ||
             sendMessageData.getConv() == null ||
             sendMessageData.getConv().getType() < 0 ||
-            sendMessageData.getConv().getType() > 6 ||
+            sendMessageData.getConv().getType() > 8 ||
             StringUtil.isNullOrEmpty(sendMessageData.getConv().getTarget()) ||
             StringUtil.isNullOrEmpty(sendMessageData.getSender()) ||
             sendMessageData.getPayload() == null) {

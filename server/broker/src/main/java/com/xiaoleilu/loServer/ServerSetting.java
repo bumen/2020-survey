@@ -5,9 +5,9 @@ import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.slf4j.LoggerFactory;
+
 import com.xiaoleilu.hutool.lang.Singleton;
-import com.xiaoleilu.hutool.log.Log;
-import com.xiaoleilu.hutool.log.StaticLog;
 import com.xiaoleilu.hutool.util.FileUtil;
 import com.xiaoleilu.hutool.util.StrUtil;
 import com.xiaoleilu.loServer.action.Action;
@@ -17,7 +17,6 @@ import com.xiaoleilu.loServer.annotation.HttpMethod;
 import com.xiaoleilu.loServer.annotation.Route;
 import com.xiaoleilu.loServer.exception.ServerSettingException;
 import com.xiaoleilu.loServer.filter.Filter;
-import org.slf4j.LoggerFactory;
 
 /**
  * 全局设定文件
@@ -294,8 +293,9 @@ public class ServerSetting {
 	 * 所有Action都是以单例模式存在的！
 	 * @param actionClass 带注解的Action类
 	 */
-	public static void setAction(Class<? extends Action> actionClass) {
-		setAction((Action)Singleton.get(actionClass));
+	public static void setAction(Class<? extends Action> actionClass)
+        throws IllegalAccessException, InstantiationException {
+		setAction(actionClass.newInstance());
 	}
 	//----------------------------------------------------------------------------------------------- Action start
 	

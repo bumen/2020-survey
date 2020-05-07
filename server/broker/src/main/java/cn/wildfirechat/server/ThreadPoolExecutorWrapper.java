@@ -8,14 +8,15 @@
 
 package cn.wildfirechat.server;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import cn.wildfirechat.log.Logs;
+import io.TraceWrapperRunnable;
+import org.slf4j.Logger;
+
 public class ThreadPoolExecutorWrapper {
-    private static final Logger LOG = LoggerFactory.getLogger(ThreadPoolExecutorWrapper.class);
+    private static final Logger LOG = Logs.MQTT;
     private final ScheduledExecutorService executor;
     private final int count;
     private final AtomicInteger runCounter;
@@ -29,17 +30,7 @@ public class ThreadPoolExecutorWrapper {
     }
 
     public void execute(Runnable task) {
-        int startCount = runCounter.incrementAndGet();
-        LOG.debug("Submit task and current task count {}", startCount);
-        final long startTime = System.currentTimeMillis();
-        executor.execute(() -> {
-            try {
-                task.run();
-            } finally {
-                int endCount = runCounter.decrementAndGet();
-                LOG.debug("Finish task and current task count {} use time {}", endCount, System.currentTimeMillis()-startTime);
-            }
-        });
+        executor.execute(new TraceWrapperRunnable(task));
     }
 
     public void shutdown() {

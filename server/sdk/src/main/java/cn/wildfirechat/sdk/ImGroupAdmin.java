@@ -1,14 +1,30 @@
 package cn.wildfirechat.sdk;
 
-import cn.wildfirechat.common.APIPath;
-import cn.wildfirechat.pojos.*;
-import cn.wildfirechat.sdk.model.IMResult;
-import cn.wildfirechat.sdk.utilities.AdminHttpUtils;
-
 import java.util.ArrayList;
 import java.util.List;
 
-public class GroupAdmin {
+import cn.wildfirechat.common.APIPath;
+import cn.wildfirechat.pojos.InputAddGroupMember;
+import cn.wildfirechat.pojos.InputCreateGroup;
+import cn.wildfirechat.pojos.InputDismissGroup;
+import cn.wildfirechat.pojos.InputGetGroup;
+import cn.wildfirechat.pojos.InputKickoffGroupMember;
+import cn.wildfirechat.pojos.InputModifyGroupInfo;
+import cn.wildfirechat.pojos.InputQuitGroup;
+import cn.wildfirechat.pojos.InputSetGroupManager;
+import cn.wildfirechat.pojos.InputTransferGroup;
+import cn.wildfirechat.pojos.InputUserId;
+import cn.wildfirechat.pojos.MessagePayload;
+import cn.wildfirechat.pojos.OutputCreateGroupResult;
+import cn.wildfirechat.pojos.OutputGroupIds;
+import cn.wildfirechat.pojos.OutputGroupMemberList;
+import cn.wildfirechat.pojos.PojoGroup;
+import cn.wildfirechat.pojos.PojoGroupInfo;
+import cn.wildfirechat.pojos.PojoGroupMember;
+import cn.wildfirechat.sdk.model.IMResult;
+import cn.wildfirechat.sdk.utilities.ImAdminHttpUtils;
+
+public class ImGroupAdmin {
     public static IMResult<OutputCreateGroupResult> createGroup(String operator, PojoGroupInfo group_info, List<PojoGroupMember> members, List<Integer> to_lines, MessagePayload  notify_message) throws Exception {
         String path = APIPath.Create_Group;
         PojoGroup pojoGroup = new PojoGroup();
@@ -20,7 +36,7 @@ public class GroupAdmin {
         createGroup.setTo_lines(to_lines);
         createGroup.setNotify_message(notify_message);
 
-        return AdminHttpUtils.httpJsonPost(path, createGroup, OutputCreateGroupResult.class);
+        return ImAdminHttpUtils.httpJsonPost(path, createGroup, OutputCreateGroupResult.class);
     }
 
     public static IMResult<PojoGroupInfo> getGroupInfo(String groupId) throws Exception {
@@ -28,7 +44,7 @@ public class GroupAdmin {
         InputGetGroup input = new InputGetGroup();
         input.setGroupId(groupId);
 
-        return AdminHttpUtils.httpJsonPost(path, input, PojoGroupInfo.class);
+        return ImAdminHttpUtils.httpJsonPost(path, input, PojoGroupInfo.class);
     }
 
     public static IMResult<Void> dismissGroup(String operator, String groupId, List<Integer> to_lines, MessagePayload  notify_message) throws Exception {
@@ -38,7 +54,7 @@ public class GroupAdmin {
         dismissGroup.setGroup_id(groupId);
         dismissGroup.setTo_lines(to_lines);
         dismissGroup.setNotify_message(notify_message);
-        return AdminHttpUtils.httpJsonPost(path, dismissGroup, Void.class);
+        return ImAdminHttpUtils.httpJsonPost(path, dismissGroup, Void.class);
     }
 
     public static IMResult<Void> transferGroup(String operator, String groupId, String newOwner, List<Integer> to_lines, MessagePayload  notify_message) throws Exception {
@@ -49,7 +65,7 @@ public class GroupAdmin {
         transferGroup.setOperator(operator);
         transferGroup.setTo_lines(to_lines);
         transferGroup.setNotify_message(notify_message);
-        return AdminHttpUtils.httpJsonPost(path, transferGroup, Void.class);
+        return ImAdminHttpUtils.httpJsonPost(path, transferGroup, Void.class);
     }
 
     public static IMResult<Void> modifyGroupInfo(String operator, String groupId, int type, String value, List<Integer> to_lines) throws Exception {
@@ -60,7 +76,7 @@ public class GroupAdmin {
         modifyGroupInfo.setTo_lines(to_lines);
         modifyGroupInfo.setType(type);
         modifyGroupInfo.setValue(value);
-        return AdminHttpUtils.httpJsonPost(path, modifyGroupInfo, Void.class);
+        return ImAdminHttpUtils.httpJsonPost(path, modifyGroupInfo, Void.class);
     }
 
 
@@ -68,7 +84,7 @@ public class GroupAdmin {
         String path = APIPath.Group_Member_List;
         InputGetGroup input = new InputGetGroup();
         input.setGroupId(groupId);
-        return AdminHttpUtils.httpJsonPost(path, input, OutputGroupMemberList.class);
+        return ImAdminHttpUtils.httpJsonPost(path, input, OutputGroupMemberList.class);
     }
 
     public static IMResult<Void> addGroupMembers(String operator, String groupId, List<String> groupMemberIds, List<Integer> to_lines, MessagePayload  notify_message) throws Exception {
@@ -85,7 +101,7 @@ public class GroupAdmin {
         addGroupMember.setOperator(operator);
         addGroupMember.setTo_lines(to_lines);
         addGroupMember.setNotify_message(notify_message);
-        return AdminHttpUtils.httpJsonPost(path, addGroupMember, Void.class);
+        return ImAdminHttpUtils.httpJsonPost(path, addGroupMember, Void.class);
     }
 
     public static IMResult<Void> setGroupManager(String operator, String groupId, List<String> groupMemberIds, boolean isManager, List<Integer> to_lines, MessagePayload  notify_message) throws Exception {
@@ -97,7 +113,7 @@ public class GroupAdmin {
         addGroupMember.setOperator(operator);
         addGroupMember.setTo_lines(to_lines);
         addGroupMember.setNotify_message(notify_message);
-        return AdminHttpUtils.httpJsonPost(path, addGroupMember, Void.class);
+        return ImAdminHttpUtils.httpJsonPost(path, addGroupMember, Void.class);
     }
 
 
@@ -110,7 +126,7 @@ public class GroupAdmin {
         kickoffGroupMember.setOperator(operator);
         kickoffGroupMember.setTo_lines(to_lines);
         kickoffGroupMember.setNotify_message(notify_message);
-        return AdminHttpUtils.httpJsonPost(path, kickoffGroupMember, Void.class);
+        return ImAdminHttpUtils.httpJsonPost(path, kickoffGroupMember, Void.class);
     }
 
     public static IMResult<Void> quitGroup(String operator, String groupId, List<Integer> to_lines, MessagePayload  notify_message) throws Exception {
@@ -120,14 +136,14 @@ public class GroupAdmin {
         quitGroup.setOperator(operator);
         quitGroup.setTo_lines(to_lines);
         quitGroup.setNotify_message(notify_message);
-        return AdminHttpUtils.httpJsonPost(path, quitGroup, Void.class);
+        return ImAdminHttpUtils.httpJsonPost(path, quitGroup, Void.class);
     }
 
     public static IMResult<OutputGroupIds> getUserGroups(String user) throws Exception {
         String path = APIPath.Get_User_Groups;
         InputUserId inputUserId = new InputUserId();
         inputUserId.setUserId(user);
-        return AdminHttpUtils.httpJsonPost(path, inputUserId, OutputGroupIds.class);
+        return ImAdminHttpUtils.httpJsonPost(path, inputUserId, OutputGroupIds.class);
     }
 
 

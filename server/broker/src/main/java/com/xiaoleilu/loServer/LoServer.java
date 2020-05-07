@@ -1,10 +1,6 @@
 package com.xiaoleilu.loServer;
 
-import com.xiaoleilu.hutool.util.DateUtil;
-import com.xiaoleilu.loServer.action.Action;
-import com.xiaoleilu.loServer.annotation.Route;
-import com.xiaoleilu.loServer.handler.AdminActionHandler;
-import com.xiaoleilu.loServer.handler.IMActionHandler;
+import cn.wildfirechat.log.Logs;
 import io.moquette.spi.IMessagesStore;
 import io.moquette.spi.ISessionsStore;
 import io.netty.bootstrap.ServerBootstrap;
@@ -19,11 +15,14 @@ import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
 import io.netty.handler.stream.ChunkedWriteHandler;
-import com.xiaoleilu.loServer.action.ClassUtil;
-import org.slf4j.LoggerFactory;
 import win.liyufan.im.Utility;
 
-import java.io.IOException;
+import com.xiaoleilu.hutool.util.DateUtil;
+import com.xiaoleilu.loServer.action.Action;
+import com.xiaoleilu.loServer.action.ClassUtil;
+import com.xiaoleilu.loServer.annotation.Route;
+import com.xiaoleilu.loServer.handler.AdminActionHandler;
+import com.xiaoleilu.loServer.handler.IMActionHandler;
 
 /**
  * LoServer starter<br>
@@ -34,7 +33,7 @@ import java.io.IOException;
  *
  */
 public class LoServer {
-    private static final org.slf4j.Logger Logger = LoggerFactory.getLogger(LoServer.class);
+    private static final org.slf4j.Logger Logger = Logs.SERVER;
 	private int port;
     private int adminPort;
     private IMessagesStore messagesStore;
@@ -140,11 +139,9 @@ public class LoServer {
                     ServerSetting.setAction((Class<? extends Action>)cls);
                 }
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             Utility.printExecption(Logger, e);
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
         }
     }
 }

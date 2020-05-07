@@ -20,12 +20,12 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
+import cn.wildfirechat.log.Logs;
 import io.moquette.BrokerConstants;
 import io.moquette.interception.InterceptHandler;
 import io.moquette.server.ConnectionDescriptorStore;
 import io.moquette.server.Server;
 import io.moquette.server.config.IConfig;
-import io.moquette.service.ArenaMessageService;
 import io.moquette.service.WorldMessageService;
 import io.moquette.spi.IMessagesStore;
 import io.moquette.spi.ISessionsStore;
@@ -35,14 +35,13 @@ import io.moquette.spi.impl.security.TokenAuthenticator;
 import io.moquette.spi.security.IAuthenticator;
 import io.moquette.spi.security.IAuthorizator;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * It's main responsibility is bootstrap the ProtocolProcessor.
  */
 public class ProtocolProcessorBootstrapper {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ProtocolProcessorBootstrapper.class);
+    private static final Logger LOG = Logs.SERVER;
     public static final String INMEMDB_STORE_CLASS = "io.moquette.persistence.MemoryStorageService";
 
     private ISessionsStore m_sessionsStore;
@@ -122,9 +121,6 @@ public class ProtocolProcessorBootstrapper {
         LOG.info("Initializing MQTT protocol processor...");
         m_processor.init(connectionDescriptors, messagesStore, m_sessionsStore, authenticator,
             authorizator, interceptor, server);
-
-        WorldMessageService.INSTANCE.init(server);
-        ArenaMessageService.INSTANCE.init(server);
 
         return m_processor;
     }

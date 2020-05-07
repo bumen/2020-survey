@@ -8,27 +8,15 @@
 
 package cn.wildfirechat.pojos;
 
-public class PojoGroupInfo {
+public class PojoUnionInfo {
     // id
-    String target_id;
+    String unionId;
     // 名称
     String name;
     // 头像
     String portrait;
     // 所有者
     String owner;
-    // 类型
-    int type;
-    // 扩展
-    String extra;
-
-    public String getTarget_id() {
-        return target_id;
-    }
-
-    public void setTarget_id(String target_id) {
-        this.target_id = target_id;
-    }
 
     public String getName() {
         return name;
@@ -52,21 +40,5 @@ public class PojoGroupInfo {
 
     public void setOwner(String owner) {
         this.owner = owner;
-    }
-
-    public int getType() {
-        return type;
-    }
-
-    public void setType(int type) {
-        this.type = type;
-    }
-
-    public String getExtra() {
-        return extra;
-    }
-
-    public void setExtra(String extra) {
-        this.extra = extra;
     }
 }

@@ -13,8 +13,7 @@ import java.util.concurrent.Executor;
 
 import cn.wildfirechat.common.APIPath;
 import cn.wildfirechat.common.ErrorCode;
-import cn.wildfirechat.pojos.InputCreateGroup;
-import cn.wildfirechat.pojos.OutputCreateGroupResult;
+import cn.wildfirechat.pojos.InputQuitGroup;
 import io.moquette.persistence.RPCCenter;
 import io.moquette.persistence.TargetEntry;
 import io.netty.buffer.ByteBuf;
@@ -30,9 +29,9 @@ import com.xiaoleilu.loServer.annotation.Route;
 import com.xiaoleilu.loServer.handler.Request;
 import com.xiaoleilu.loServer.handler.Response;
 
-@Route(APIPath.Create_Group)
+@Route(APIPath.Union_Member_Quit)
 @HttpMethod("POST")
-public class CreateWorldAction extends AdminAction {
+public class QuitUnionMemberAction extends AdminAction {
 
     @Override
     public boolean isTransactionAction() {
@@ -42,19 +41,16 @@ public class CreateWorldAction extends AdminAction {
     @Override
     public boolean action(Request request, Response response) {
         if (request.getNettyRequest() instanceof FullHttpRequest) {
-            InputCreateGroup inputCreateGroup = getRequestBody(request.getNettyRequest(), InputCreateGroup.class);
-            if (inputCreateGroup.isValide()) {
-                RPCCenter.getInstance().sendRequest(inputCreateGroup.getOperator(), null, "", IMTopic.CreateGroupTopic, inputCreateGroup.toProtoGroupRequest().toByteArray(), inputCreateGroup.getOperator(), TargetEntry.Type.TARGET_TYPE_USER, new RPCCenter.Callback() {
+            InputQuitGroup inputQuitGroup = getRequestBody(request.getNettyRequest(), InputQuitGroup.class);
+            if (inputQuitGroup.isValide()) {
+                RPCCenter.getInstance().sendRequest(inputQuitGroup.getOperator(), null, "", IMTopic.QuitUnionMemberTopic, inputQuitGroup.toProtoGroupRequest().toByteArray(), inputQuitGroup.getOperator(), TargetEntry.Type.TARGET_TYPE_USER, new RPCCenter.Callback() {
                     @Override
                     public void onSuccess(byte[] result) {
                         ByteBuf byteBuf = Unpooled.buffer();
                         byteBuf.writeBytes(result);
                         ErrorCode errorCode = ErrorCode.fromCode(byteBuf.readByte());
                         if (errorCode == ErrorCode.ERROR_CODE_SUCCESS) {
-                            byte[] data = new byte[byteBuf.readableBytes()];
-                            byteBuf.readBytes(data);
-                            String groupId = new String(data);
-                            sendResponse(response, null, new OutputCreateGroupResult(groupId));
+                            sendResponse(response, null, null);
                         } else {
                             sendResponse(response, errorCode, null);
                         }

@@ -1,5 +1,6 @@
 package io.moquette.service;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -18,8 +19,10 @@ import cn.wildfirechat.proto.WFCMessage;
 import io.moquette.connections.IConnectionsManager;
 import io.moquette.persistence.MemoryMessagesStore;
 import io.moquette.persistence.MemorySessionStore;
+import io.moquette.persistence.MemorySessionStore.Session;
 import io.moquette.server.Server;
 import io.moquette.spi.IMessagesStore;
+import io.moquette.spi.ISessionsStore;
 import io.moquette.spi.impl.MessagesPublisher;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -33,14 +36,18 @@ import static io.moquette.server.Constants.MAX_MESSAGE_QUEUE;
 
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IMap;
+import com.hazelcast.util.StringUtil;
 import com.playcrab.thread.NamedThreadFactory;
 import com.playcrab.util.TimeUtils;
 
 /**
+ *
+ * 区域频道
+ *
  * @date 2020-04-28
  * @author zhangyuqiang02@playcrab.com
  */
-public enum  ArenaMessageService {
+public enum ArenaMessageService {
 
     INSTANCE;
 
@@ -66,23 +73,30 @@ public enum  ArenaMessageService {
             TimeUnit.SECONDS, new ArrayBlockingQueue<>(1), new NamedThreadFactory(
             "IM-arena-executor", true));
 
-        executor.execute(()->{
+        executor.execute(() -> {
             this.doSend();
         });
 
-        Logs.SERVER.info("WorldMessageService#init ok");
+        Logs.SERVER.info("ArenaMessageService#init ok");
     }
 
     public void shutdown() {
         this.started = false;
         executor.shutdownNow();
 
-        Logs.SERVER.info("WorldMessageService#shutodnw ok");
+        Logs.SERVER.info("ArenaMessageService#shutodnw ok");
     }
 
+    /**
+     * <arenaId, <seqId, mid>>
+     */
     private ConcurrentHashMap<String, ConcurrentSkipListMap<Long, Long>> arenaMessages = new ConcurrentHashMap<>();
 
-    private ConcurrentHashMap<String, Long> notifyArenaSeq = new ConcurrentHashMap<>(1);
+    /**
+     * <section, <arenaId, seqId>>
+     */
+    private ConcurrentHashMap<String, ConcurrentHashMap<String, Long>> notifyArenaSeq = new ConcurrentHashMap<>(
+        1);
 
 
     /**
@@ -105,10 +119,23 @@ public enum  ArenaMessageService {
         // 集群通知
         notifyClusterMessageSeq(message.getMessageId(), seqId);
 
-        // 通知用户，保存最小的
-        notifyArenaSeq.putIfAbsent(arenaId, seqId);
+        ConcurrentHashMap<String, Long> v = notifyArenaSeq.get(section);
+        if (v == null) {
+            // 通知用户，保存最小的
+            notifyArenaSeq.putIfAbsent(section, new ConcurrentHashMap<>());
+            v = notifyArenaSeq.get(section);
+        }
 
-        logger.debug("WorldMessageService#sendMessage user:{} section:{} seq:{} ok", userId,
+        v.put(arenaId, seqId);
+        // AtomicLong s = v.get(arenaId);
+        // if (s == null) {
+        //     v.putIfAbsent(arenaId, new AtomicLong(0));
+        //     s = v.get(arenaId);
+        // }
+        //
+        // s.compareAndSet(0, seqId);
+
+        logger.debug("ArenaMessageService#sendMessage user:{} section:{} seq:{} ok", userId,
             section, seqId);
     }
 
@@ -118,20 +145,19 @@ public enum  ArenaMessageService {
     public void doSend() {
         // 最快1/2秒推送一次
         final int tick = 500;
-        long b;
         while (started) {
+            try {
+                Iterator<Entry<String, ConcurrentHashMap<String, Long>>> it = notifyArenaSeq
+                    .entrySet().iterator();
+                while (it.hasNext()) {
+                    Entry<String, ConcurrentHashMap<String, Long>> entry = it.next();
 
-            b = TimeUtils.now();
-
-            Iterator<Entry<String, Long>> it = notifyArenaSeq.entrySet().iterator();
-            while (it.hasNext()) {
-                Map.Entry<String, Long> entry = it.next();
-                it.remove();
-
-                notifyOnlineArenaUser(entry.getKey(), entry.getValue());
+                    // 一次通知一个区服的所有区域
+                    notifyOnlineArenaUser(entry.getKey(), entry.getValue());
+                }
+            } catch (Exception e) {
+                logger.error("ArenaMessageService#doSend error", e);
             }
-
-            logger.debug("WorldMessageService#doSend finish time:{}", TimeUtils.now() - b);
 
             try {
                 Thread.sleep(tick);
@@ -141,15 +167,35 @@ public enum  ArenaMessageService {
 
         }
     }
+
     private final AtomicLong maxSeq = new AtomicLong(0);
 
     public long insertArenaMessages(String arenaId, long messageId) {
         // messageId是全局的，messageSeq是跟个人相关的，理论上messageId的增长数度远远大于seq。
         // 考虑到一种情况，当服务器发生变化，用户发生迁移后，messageSeq还需要保持有序。 要么把Seq持久化，要么在迁移后Seq取一个肯定比以前更大的数字（这个数字就是messageId）
         // 这里选择使用后面一种情况
-        long messageSeq = 0;
-
         ConcurrentSkipListMap<Long, Long> maps = getArenaMessages(arenaId);
+
+        long messageSeq = 0;
+        Long v = Long.MIN_VALUE;
+        while (v != null) {
+            messageSeq = nextSeqId(maps, messageId);
+            v = maps.putIfAbsent(messageSeq, messageId);
+        }
+
+        logger.debug("ArenaMessageService#insertMessages arenaId:{} seq:{} ok",
+            arenaId, messageSeq);
+
+        if (maps.size() > MAX_MESSAGE_QUEUE) {
+            maps.remove(maps.firstKey());
+        }
+
+        messagesStore.getDatabaseStore().persistArenaMessage(arenaId, messageId, messageSeq);
+        return messageSeq;
+    }
+
+    private long nextSeqId(ConcurrentSkipListMap<Long, Long> maps, long messageId) {
+        long messageSeq = 0;
 
         Map.Entry<Long, Long> lastEntry = maps.lastEntry();
         if (lastEntry != null) {
@@ -164,12 +210,6 @@ public enum  ArenaMessageService {
             messageSeq = messageId;
         }
 
-        maps.put(messageSeq, messageId);
-        if (maps.size() > MAX_MESSAGE_QUEUE) {
-            maps.remove(maps.firstKey());
-        }
-
-        messagesStore.getDatabaseStore().persistArenaMessage(arenaId, messageId, messageSeq);
         return messageSeq;
     }
 
@@ -270,45 +310,93 @@ public enum  ArenaMessageService {
     /**
      * 通知所有在线玩家拉取世界频道消息
      * @param section 区服
-     * @param seq 需要拉取的最小顺序号
+     * @param seqMap 需要拉取的最大顺序号
      */
-    public void notifyOnlineArenaUser(String section, long seq) {
-        WFCMessage.NotifyMessage notifyMessage = WFCMessage.NotifyMessage
-            .newBuilder()
-            .setType(PullType.Pull_Arena)
-            .setHead(seq)
-            .build();
+    public void notifyOnlineArenaUser(String section,
+        ConcurrentHashMap<String, Long> seqMap) {
+        Map<String, MqttPublishMessage> arenaMsg = new HashMap<>(seqMap.size());
 
-        ByteBuf payload = Unpooled.buffer();
-        byte[] byteData = notifyMessage.toByteArray();
-        payload.ensureWritable(byteData.length).writeBytes(byteData);
-        MqttPublishMessage publishMsg;
-        publishMsg = MessagesPublisher
-            .notRetainedPublish(IMTopic.NotifyMessageTopic, MqttQoS.AT_MOST_ONCE,
-                payload);
+        // 创建消息
+        Iterator<Entry<String, Long>> it = seqMap.entrySet().iterator();
+        while (it.hasNext()) {
+            Entry<String, Long> entry = it.next();
+            it.remove();
 
+            WFCMessage.NotifyMessage notifyMessage = WFCMessage.NotifyMessage
+                .newBuilder()
+                .setType(PullType.Pull_Arena)
+                .setHead(entry.getValue())
+                .build();
+
+            ByteBuf payload = Unpooled.buffer();
+            byte[] byteData = notifyMessage.toByteArray();
+            payload.ensureWritable(byteData.length).writeBytes(byteData);
+            MqttPublishMessage publishMsg = MessagesPublisher
+                .notRetainedPublish(IMTopic.NotifyMessageTopic, MqttQoS.AT_MOST_ONCE,
+                    payload);
+
+            arenaMsg.put(entry.getKey(), publishMsg);
+
+            logger.debug("ArenaMessageService#notifyOnlineUser section:{} arena:{} seq:{} start...",
+                section, entry.getKey(), entry.getValue());
+        }
+
+        if (arenaMsg.isEmpty()) {
+            return;
+        }
+
+        // 全服发送
+        ISessionsStore sessionsStore = mServer.getStore().sessionsStore();
         int c = 0;
         Set<String> onlineClientIds = connectionDescriptors.getSectionClients(section);
+        if (onlineClientIds == null) {
+            return;
+        }
         for (String cid : onlineClientIds) {
-            boolean targetIsActive = this.connectionDescriptors.isConnected(cid);
-            if (targetIsActive) {
+            try {
+                boolean targetIsActive = this.connectionDescriptors.isConnected(cid);
+                if (targetIsActive) {
+                    Session session = sessionsStore.getSession(cid);
+                    if (session == null) {
+                        continue;
+                    }
 
-                boolean sent = this.publisher.sendPublish(cid, publishMsg);
+                    WFCMessage.User user = messagesStore.getUserInfo(session.getUsername());
+                    if (user == null) {
+                        continue;
+                    }
 
-                logger.debug("WorldMessageService#notifyOnlineUser section:{} cid:{} finish:{}",
+                    String userArena = user.getCompany();
+                    if (StringUtil.isNullOrEmpty(userArena)) {
+                        continue;
+                    }
+
+                    MqttPublishMessage publishMsg = arenaMsg.get(userArena);
+                    if (publishMsg == null) {
+                        continue;
+                    }
+
+                    boolean sent = this.publisher.sendPublish(cid, publishMsg);
+
+                    logger.debug("ArenaMessageService#notifyOnlineUser section:{} cid:{} finish:{}",
+                        section,
+                        cid, sent);
+                } else {
+                    logger.debug("ArenaMessageService#notifyOnlineUser section:{} cid:{} no online",
+                        section,
+                        cid);
+                }
+            } catch (Exception e) {
+                logger.error("ArenaMessageService#notifyOnlineUser section:{} cid:{} error",
                     section,
-                    cid, sent);
-            } else {
-                logger.debug("WorldMessageService#notifyOnlineUser section:{} cid:{} no online",
-                    section,
-                    cid);
+                    cid, e);
             }
+
             c++;
         }
 
-        logger.debug("WorldMessageService#notifyOnlineUser section:{} online user size:{} seq:{}",
-            section,
-            c, seq);
+        logger.debug("ArenaMessageService#notifyOnlineUser section:{} online user size:{}", section,
+            c);
     }
 
 
@@ -336,6 +424,7 @@ public enum  ArenaMessageService {
             }
         }
     }
+
     /**
      *  TODO 集群开发时实现
      */

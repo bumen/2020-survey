@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Executors;
 
+import cn.wildfirechat.log.Logs;
 import cn.wildfirechat.push.PushServer;
 import cn.wildfirechat.server.ThreadPoolExecutorWrapper;
 import io.moquette.BrokerConstants;
@@ -38,6 +39,9 @@ import io.moquette.server.config.MediaServerConfig;
 import io.moquette.server.config.MemoryConfig;
 import io.moquette.server.config.ResourceLoaderConfig;
 import io.moquette.server.netty.NettyAcceptor;
+import io.moquette.service.ArenaMessageService;
+import io.moquette.service.BattleMessageService;
+import io.moquette.service.WorldMessageService;
 import io.moquette.spi.IStore;
 import io.moquette.spi.impl.ProtocolProcessor;
 import io.moquette.spi.impl.ProtocolProcessorBootstrapper;
@@ -49,7 +53,6 @@ import io.moquette.spi.security.Tokenor;
 import io.netty.util.ResourceLeakDetector;
 import io.netty.util.internal.StringUtil;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import win.liyufan.im.DBUtil;
 import win.liyufan.im.MessageShardingUtil;
 import win.liyufan.im.Utility;
@@ -70,6 +73,7 @@ import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.ISet;
+import com.playcrab.thread.NamedThreadFactory;
 import com.xiaoleilu.loServer.LoServer;
 import com.xiaoleilu.loServer.ServerSetting;
 import com.xiaoleilu.loServer.action.admin.AdminAction;
@@ -88,7 +92,7 @@ public class Server {
             "  \\ V  V / | || || (_| ||  _|| || |  |  __/ | (__ | | | || (_| || |_ \n" +
             "   \\_/\\_/  |_||_| \\__,_||_|  |_||_|   \\___|  \\___||_| |_| \\__,_| \\__|\n";
 
-    private static final Logger LOG = LoggerFactory.getLogger(Server.class);
+    private static final Logger LOG = Logs.SERVER;
 
     private static Server instance;
 
@@ -149,7 +153,7 @@ public class Server {
         Runtime.getRuntime().addShutdownHook(new Thread(instance::stopServer));
         Runtime.getRuntime().addShutdownHook(new Thread(httpServer::shutdown));
 
-        System.out.println("Wildfire IM server start success...");
+        LOG.info("Wildfire IM server start success...");
     }
 
     /**
@@ -257,8 +261,13 @@ public class Server {
         LOG.info("Starting Moquette Server. MQTT message interceptors={}", getInterceptorIds(handlers));
 
         int threadNum = Runtime.getRuntime().availableProcessors() * 2;
-        dbScheduler = new ThreadPoolExecutorWrapper(Executors.newScheduledThreadPool(threadNum), threadNum, "db");
-        imBusinessScheduler = new ThreadPoolExecutorWrapper(Executors.newScheduledThreadPool(threadNum), threadNum, "business");
+
+
+
+        dbScheduler = new ThreadPoolExecutorWrapper(Executors.newScheduledThreadPool(threadNum, new NamedThreadFactory(
+            "IM-db-executor", false)), threadNum, "db");
+        imBusinessScheduler = new ThreadPoolExecutorWrapper(Executors.newScheduledThreadPool(threadNum, new NamedThreadFactory(
+            "IM-business-executor", false)), threadNum, "business");
 
         final String handlerProp = System.getProperty(BrokerConstants.INTERCEPT_HANDLER_PROPERTY_NAME);
         if (handlerProp != null) {
@@ -284,6 +293,10 @@ public class Server {
         }
 
         m_processor = processor;
+
+        WorldMessageService.INSTANCE.init(this);
+        ArenaMessageService.INSTANCE.init(this);
+        BattleMessageService.INSTANCE.init(this);
 
         LOG.info("Binding server to the configured ports");
         m_acceptor = new NettyAcceptor();
@@ -426,10 +439,10 @@ public class Server {
     public void internalRpcMsg(String fromUser, String clientId, String section, byte[] message, int messageId, String from, String request, boolean isAdmin) {
 
         if (!m_initialized) {
-            LOG.error("Moquette is not started, internal message cannot be notify");
+            Logs.HTTP.error("Moquette is not started, internal message cannot be notify");
             return;
         }
-        LOG.debug("internalNotifyMsg");
+
         m_processor.onRpcMsg(fromUser, clientId, section, message, messageId, from, request, isAdmin);
     }
 

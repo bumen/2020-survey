@@ -24,6 +24,7 @@ import cn.wildfirechat.log.Logs;
 import cn.wildfirechat.proto.ProtoConstants;
 import cn.wildfirechat.proto.WFCMessage;
 import cn.wildfirechat.server.ThreadPoolExecutorWrapper;
+import io.TraceRunnable;
 import io.moquette.server.Server;
 import io.moquette.spi.IMessagesStore;
 import io.moquette.spi.ISessionsStore;
@@ -33,6 +34,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.util.internal.StringUtil;
 import org.slf4j.Logger;
+import org.slf4j.MDC;
 import win.liyufan.im.RateLimiter;
 import win.liyufan.im.Utility;
 
@@ -171,7 +173,9 @@ abstract public class IMHandler<T> {
     }
 
 	public void doHandler(String clientID, String fromUser, String section, String topic, byte[] payloadContent, Qos1PublishHandler.IMCallback callback, boolean isAdmin) {
-        m_imBusinessExecutor.execute(() -> {
+
+        Runnable runnable = new TraceRunnable(fromUser, () -> {
+            MDC.put("MQTT-UserId", fromUser);
             Qos1PublishHandler.IMCallback callbackWrapper = new Qos1PublishHandler.IMCallback() {
                 @Override
                 public void onIMHandled(ErrorCode errorCode, ByteBuf ackPayload) {
@@ -217,6 +221,8 @@ abstract public class IMHandler<T> {
                 response(ackPayload, preActionCode, callback);
             }
         });
+
+        m_imBusinessExecutor.execute(runnable);
     }
 
     private void response(ByteBuf ackPayload, ErrorCode errorCode, Qos1PublishHandler.IMCallback callback) {

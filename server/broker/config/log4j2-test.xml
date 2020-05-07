@@ -2,12 +2,17 @@
 <Configuration status="info" monitorInterval="60" shutdownHook="disable">
        <Appenders>
          <Console name="Console" target="SYSTEM_OUT">
-           <PatternLayout pattern="%d [%-5p][%t] %c - [%X{SOFA-TraceId},%X{SOFA-SpanId}] %m%n"/>
+           <PatternLayout pattern="%d [%-5p][%t] %c - [%X{MQTT-TraceId},%X{MQTT-UserId}] %m%n"/>
          </Console>
        </Appenders>
        <Loggers>
+         <Logger name="DB" level="debug"/>
+         <Logger name="SERVER" level="debug"/>
+         <Logger name="HTTP" level="debug"/>
+         <Logger name="MQTT" level="debug"/>
          <Logger name="com.xiaoleilu" level="debug"/>
          <Logger name="io.moquette" level="debug"/>
+         <Logger name="io.netty.channel" level="error"/>
          <Root level="info">
            <AppenderRef ref="Console"/>
          </Root>

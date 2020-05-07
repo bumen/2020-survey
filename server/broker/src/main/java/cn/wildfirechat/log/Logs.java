@@ -11,4 +11,5 @@ public class Logs {
     public static final Logger SERVER = LoggerFactory.getLogger("SERVER");
     public static final Logger HTTP = LoggerFactory.getLogger("HTTP");
     public static final Logger MQTT = LoggerFactory.getLogger("MQTT");
+    public static final Logger DB = LoggerFactory.getLogger("DB");
 }

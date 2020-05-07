@@ -74,4 +74,10 @@ public interface IMTopic {
     String DestroyUserTopic = "DESTROYUSER";
 
     String LoadRemoteMessagesTopic = "LRM";
+
+
+    String CreateUnionTopic = "UC";
+    String DismissUnionTopic = "UD";
+    String AddUnionMemberTopic = "UAM";
+    String QuitUnionMemberTopic = "UQM";
 }

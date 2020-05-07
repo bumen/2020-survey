@@ -13,6 +13,7 @@ import cn.wildfirechat.proto.ProtoConstants;
 import cn.wildfirechat.proto.ProtoConstants.PullType;
 import cn.wildfirechat.proto.WFCMessage;
 import io.moquette.service.ArenaMessageService;
+import io.moquette.service.BattleMessageService;
 import io.moquette.service.WorldMessageService;
 import io.moquette.spi.impl.Qos1PublishHandler;
 import io.netty.buffer.ByteBuf;
@@ -38,6 +39,12 @@ public class PullMessageHandler extends IMHandler<WFCMessage.PullMessageRequest>
             ackPayload.ensureWritable(data.length).writeBytes(data);
 
             LOG.info("PullMessageHandler#action arena user:{} count:{} size:{}", fromUser, result.getMessageCount(), data.length);
+        }else if(pullType == PullType.Pull_Battle) {
+            WFCMessage.PullMessageResult result = BattleMessageService.INSTANCE.fetchMessage(fromUser, clientID, section, request.getId());
+            byte[] data = result.toByteArray();
+            ackPayload.ensureWritable(data.length).writeBytes(data);
+
+            LOG.info("PullMessageHandler#action battle user:{} count:{} size:{}", fromUser, result.getMessageCount(), data.length);
         } else if (pullType == ProtoConstants.PullType.Pull_ChatRoom && !m_messagesStore.checkUserClientInChatroom(fromUser, clientID, null)) {
             errorCode = ErrorCode.ERROR_CODE_NOT_IN_CHATROOM;
         } else {

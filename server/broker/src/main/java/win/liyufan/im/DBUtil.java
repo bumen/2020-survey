@@ -12,23 +12,26 @@ package win.liyufan.im;
 import java.beans.PropertyVetoException;
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
-import com.hazelcast.util.StringUtil;
-import com.mchange.v2.c3p0.ComboPooledDataSource;
+import cn.wildfirechat.log.Logs;
 import io.moquette.BrokerConstants;
 import io.moquette.server.config.IConfig;
 import org.flywaydb.core.Flyway;
-import org.flywaydb.core.api.configuration.FlywayConfiguration;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.ConcurrentHashMap;
+import com.mchange.v2.c3p0.ComboPooledDataSource;
 
 public class DBUtil {
-    private static final Logger LOG = LoggerFactory.getLogger(DBUtil.class);
+    private static final Logger LOG = Logs.DB;
     private static ComboPooledDataSource comboPooledDataSource = null;
     private static ConcurrentHashMap<Long, String>map = new ConcurrentHashMap<>();
     private static ThreadLocal<Connection> transactionConnection = new ThreadLocal<Connection>() {
@@ -45,10 +48,10 @@ public class DBUtil {
             String embedDB = config.getProperty(BrokerConstants.EMBED_DB_PROPERTY_NAME);
             if (embedDB != null && embedDB.equals("1")) {
                 IsEmbedDB = true;
-                LOG.info("Use h2 database");
+                Logs.SERVER.info("Use h2 database");
             } else {
                 IsEmbedDB = false;
-                LOG.info("Use mysql database");
+                Logs.SERVER.info("Use mysql database");
             }
 
             if (comboPooledDataSource == null) {

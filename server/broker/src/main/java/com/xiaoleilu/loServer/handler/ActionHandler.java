@@ -1,27 +1,21 @@
 package com.xiaoleilu.loServer.handler;
 
-import java.io.IOException;
-
-import com.hazelcast.core.HazelcastInstance;
-import com.xiaoleilu.hutool.lang.Singleton;
-import com.xiaoleilu.hutool.log.Log;
-import com.xiaoleilu.hutool.log.StaticLog;
-import com.xiaoleilu.loServer.ServerSetting;
-import com.xiaoleilu.loServer.action.Action;
-import com.xiaoleilu.loServer.action.UnknownErrorAction;
-import com.xiaoleilu.loServer.action.FileAction;
-import com.xiaoleilu.loServer.filter.Filter;
-
+import cn.wildfirechat.log.Logs;
 import io.moquette.spi.IMessagesStore;
 import io.moquette.spi.ISessionsStore;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import win.liyufan.im.Utility;
+
+import com.xiaoleilu.hutool.lang.Singleton;
+import com.xiaoleilu.loServer.ServerSetting;
+import com.xiaoleilu.loServer.action.Action;
+import com.xiaoleilu.loServer.action.FileAction;
+import com.xiaoleilu.loServer.action.UnknownErrorAction;
+import com.xiaoleilu.loServer.filter.Filter;
 
 /**
  * Action处理单元
@@ -29,7 +23,7 @@ import win.liyufan.im.Utility;
  * @author Looly
  */
 abstract public class ActionHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
-    private static final Logger Logger = LoggerFactory.getLogger(ActionHandler.class);
+    private static final Logger Logger = Logs.HTTP;
 
     public ActionHandler(IMessagesStore messagesStore, ISessionsStore sessionsStore) {
         Action.messagesStore = messagesStore;
@@ -38,7 +32,7 @@ abstract public class ActionHandler extends SimpleChannelInboundHandler<FullHttp
 
     @Override
 	protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest fullHttpRequest) throws Exception {
-        Logger.info("Http request whit url {}", fullHttpRequest.uri());
+        Logger.debug("Http request whit url {}", fullHttpRequest.uri());
 		final Request request = Request.build(ctx, fullHttpRequest);
 		final Response response = Response.build(ctx, request);
 

@@ -16,23 +16,31 @@
 
 package io.moquette.spi.impl;
 
-import io.moquette.BrokerConstants;
-import io.moquette.interception.InterceptHandler;
-import io.moquette.interception.Interceptor;
-import io.moquette.interception.messages.*;
-import io.moquette.server.config.IConfig;
-import io.netty.handler.codec.mqtt.MqttConnectMessage;
-import io.netty.handler.codec.mqtt.MqttPublishMessage;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+import cn.wildfirechat.log.Logs;
+import io.moquette.BrokerConstants;
+import io.moquette.interception.InterceptHandler;
+import io.moquette.interception.Interceptor;
+import io.moquette.interception.messages.InterceptAcknowledgedMessage;
+import io.moquette.interception.messages.InterceptConnectMessage;
+import io.moquette.interception.messages.InterceptConnectionLostMessage;
+import io.moquette.interception.messages.InterceptDisconnectMessage;
+import io.moquette.server.config.IConfig;
+import io.netty.handler.codec.mqtt.MqttConnectMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import static io.moquette.logging.LoggingUtils.getInterceptorIds;
+
+import com.playcrab.thread.NamedThreadFactory;
 
 /**
  * An interceptor that execute the interception tasks asynchronously.
@@ -44,15 +52,17 @@ final class BrokerInterceptor implements Interceptor {
     private final ExecutorService executor;
 
     private BrokerInterceptor(int poolSize, List<InterceptHandler> handlers) {
-        LOG.info("Initializing broker interceptor. InterceptorIds={}", getInterceptorIds(handlers));
+        Logs.SERVER.info("Initializing broker interceptor. InterceptorIds={}", getInterceptorIds(handlers));
         this.handlers = new HashMap<>();
         for (Class<?> messageType : InterceptHandler.ALL_MESSAGE_TYPES) {
-            this.handlers.put(messageType, new CopyOnWriteArrayList<InterceptHandler>());
+            this.handlers.put(messageType, new CopyOnWriteArrayList<>());
         }
         for (InterceptHandler handler : handlers) {
             this.addInterceptHandler(handler);
         }
-        executor = Executors.newFixedThreadPool(poolSize);
+        executor = new ThreadPoolExecutor(poolSize, poolSize, 0L,
+            TimeUnit.SECONDS, new LinkedBlockingQueue<>(), new NamedThreadFactory(
+            "IM-broker-interceptor-executor", true));
     }
 
     /**

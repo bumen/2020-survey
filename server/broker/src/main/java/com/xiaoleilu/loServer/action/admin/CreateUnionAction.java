@@ -13,7 +13,7 @@ import java.util.concurrent.Executor;
 
 import cn.wildfirechat.common.APIPath;
 import cn.wildfirechat.common.ErrorCode;
-import cn.wildfirechat.pojos.InputCreateGroup;
+import cn.wildfirechat.pojos.InputCreateUnion;
 import cn.wildfirechat.pojos.OutputCreateGroupResult;
 import io.moquette.persistence.RPCCenter;
 import io.moquette.persistence.TargetEntry;
@@ -30,7 +30,7 @@ import com.xiaoleilu.loServer.annotation.Route;
 import com.xiaoleilu.loServer.handler.Request;
 import com.xiaoleilu.loServer.handler.Response;
 
-@Route(APIPath.Create_Group)
+@Route(APIPath.Union_Create)
 @HttpMethod("POST")
 public class CreateUnionAction extends AdminAction {
 
@@ -42,9 +42,9 @@ public class CreateUnionAction extends AdminAction {
     @Override
     public boolean action(Request request, Response response) {
         if (request.getNettyRequest() instanceof FullHttpRequest) {
-            InputCreateGroup inputCreateGroup = getRequestBody(request.getNettyRequest(), InputCreateGroup.class);
+            InputCreateUnion inputCreateGroup = getRequestBody(request.getNettyRequest(), InputCreateUnion.class);
             if (inputCreateGroup.isValide()) {
-                RPCCenter.getInstance().sendRequest(inputCreateGroup.getOperator(), null,"",  IMTopic.CreateGroupTopic, inputCreateGroup.toProtoGroupRequest().toByteArray(), inputCreateGroup.getOperator(), TargetEntry.Type.TARGET_TYPE_USER, new RPCCenter.Callback() {
+                RPCCenter.getInstance().sendRequest(inputCreateGroup.getOperator(), null,"",  IMTopic.CreateUnionTopic, inputCreateGroup.toProtoGroupRequest().toByteArray(), inputCreateGroup.getOperator(), TargetEntry.Type.TARGET_TYPE_USER, new RPCCenter.Callback() {
                     @Override
                     public void onSuccess(byte[] result) {
                         ByteBuf byteBuf = Unpooled.buffer();

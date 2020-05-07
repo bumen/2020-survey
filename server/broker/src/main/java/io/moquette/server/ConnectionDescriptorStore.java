@@ -24,6 +24,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 import cn.wildfirechat.common.ErrorCode;
+import cn.wildfirechat.log.Logs;
 import io.moquette.connections.IConnectionsManager;
 import io.moquette.connections.MqttConnectionMetrics;
 import io.moquette.connections.MqttSession;
@@ -34,11 +35,10 @@ import io.moquette.spi.ISessionsStore;
 import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.handler.codec.mqtt.MqttMessageType;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class ConnectionDescriptorStore implements IConnectionsManager {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ConnectionDescriptorStore.class);
+    private static final Logger LOG = Logs.MQTT;
 
     private final ConcurrentMap<String, ConnectionDescriptor> connectionDescriptors;
     private final ConcurrentMap<String, Set<String>> sectionClients;
@@ -54,7 +54,7 @@ public class ConnectionDescriptorStore implements IConnectionsManager {
         final MqttMessageType messageType = message.fixedHeader().messageType();
         try {
             if (messageID != null) {
-                LOG.info("Sending {} message CId=<{}>, messageId={}, errorCode={}", messageType, clientID, messageID, errorCode);
+                LOG.debug("Sending {} message CId=<{}>, messageId={}, errorCode={}", messageType, clientID, messageID, errorCode);
             } else {
                 LOG.debug("Sending {} message CId=<{}>", messageType, clientID);
             }
@@ -89,7 +89,8 @@ public class ConnectionDescriptorStore implements IConnectionsManager {
         return connectionDescriptors.putIfAbsent(descriptor.clientID, descriptor);
     }
 
-    public boolean removeConnection(ConnectionDescriptor descriptor) {
+    public boolean removeConnection(String section, ConnectionDescriptor descriptor) {
+        unbindSection(section, descriptor.clientID);
         return connectionDescriptors.remove(descriptor.clientID, descriptor);
     }
 
@@ -175,6 +176,18 @@ public class ConnectionDescriptorStore implements IConnectionsManager {
         });
 
         clients.add(clientId);
+    }
+
+    public void unbindSection(String section, String clientId) {
+        if (section == null || "".equals(section)) {
+            return;
+        }
+
+        Set<String> clients = sectionClients.computeIfAbsent(section, (k)->{
+            return new ConcurrentSkipListSet<>();
+        });
+
+        clients.remove(clientId);
     }
 
     @Override

@@ -12,11 +12,21 @@ package cn.wildfirechat.pojos;
 import cn.wildfirechat.proto.WFCMessage;
 
 public class InputOutputUserInfo {
+    // 玩家uid
     private String userId;
+    // 名称
     private String name;
+    // 区服
+    private String section;
+    // 客户端id
+    private String clientId;
+    // 区域id
+    private String arenaId;
+    // 头像
+    private String portrait;
+
     private String password;
     private String displayName;
-    private String portrait;
     private int gender;
     private String mobile;
     private String email;
@@ -184,5 +194,29 @@ public class InputOutputUserInfo {
 
     public void setType(int type) {
         this.type = type;
+    }
+
+    public String getSection() {
+        return section;
+    }
+
+    public void setSection(String section) {
+        this.section = section;
+    }
+
+    public String getClientId() {
+        return clientId;
+    }
+
+    public void setClientId(String clientId) {
+        this.clientId = clientId;
+    }
+
+    public String getArenaId() {
+        return arenaId;
+    }
+
+    public void setArenaId(String arenaId) {
+        this.arenaId = arenaId;
     }
 }

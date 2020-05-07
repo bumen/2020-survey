@@ -19,11 +19,11 @@ package io.moquette.server.netty;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import cn.wildfirechat.log.Logs;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.concurrent.EventExecutor;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Auto-flush data on channel after a read timeout. It's inspired by IdleStateHandler but it's
@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
  */
 public class AutoFlushHandler extends ChannelDuplexHandler {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AutoFlushHandler.class);
+    private static final Logger LOG = Logs.MQTT;
     private static final long MIN_TIMEOUT_NANOS = TimeUnit.MILLISECONDS.toNanos(1);
 
     private final long writerIdleTimeNanos;

@@ -17,12 +17,12 @@
 package io.moquette.spi.impl;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.zip.GZIPOutputStream;
 
 import cn.wildfirechat.common.ErrorCode;
+import cn.wildfirechat.log.Logs;
 import cn.wildfirechat.pojos.OutputCheckUserOnline;
 import cn.wildfirechat.server.ThreadPoolExecutorWrapper;
 import io.moquette.imhandler.Handler;
@@ -48,7 +48,6 @@ import io.netty.handler.codec.mqtt.MqttVersion;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.internal.StringUtil;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import win.liyufan.im.IMTopic;
 import win.liyufan.im.RateLimiter;
 import win.liyufan.im.Utility;
@@ -65,7 +64,7 @@ import com.google.gson.Gson;
 import com.xiaoleilu.loServer.action.ClassUtil;
 
 public class Qos1PublishHandler extends QosPublishHandler {
-    private static final Logger LOG = LoggerFactory.getLogger(Qos1PublishHandler.class);
+    private static final Logger LOG = Logs.MQTT;
 
     private final IMessagesStore m_messagesStore;
     private final ConnectionDescriptorStore connectionDescriptors;
@@ -94,14 +93,11 @@ public class Qos1PublishHandler extends QosPublishHandler {
             for (Class cls:ClassUtil.getAllAssignedClass(IMHandler.class)) {
                 Handler annotation = (Handler)cls.getAnnotation(Handler.class);
                 if(annotation != null) {
-                    IMHandler handler = (IMHandler) com.xiaoleilu.hutool.util.ClassUtil.newInstance(cls);
+                    IMHandler handler = (IMHandler) cls.newInstance();
                     m_imHandlers.put(annotation.value(), handler);
                 }
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-            Utility.printExecption(LOG, e);
-        } catch (ClassNotFoundException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             Utility.printExecption(LOG, e);
         }
@@ -150,7 +146,7 @@ public class Qos1PublishHandler extends QosPublishHandler {
     }
 
 	void imHandler(String clientID, String fromUser, String section, String topic, byte[] payloadContent, IMCallback callback, boolean isAdmin) {
-        LOG.info("imHandler fromUser={}, topic={}", fromUser, topic);
+        LOG.debug("imHandler fromUser={}, topic={}", fromUser, topic);
         if(!mLimitCounter.isGranted(clientID + fromUser + topic)) {
             ByteBuf ackPayload = Unpooled.buffer();
             ackPayload.ensureWritable(1).writeByte(ERROR_CODE_OVER_FREQUENCY.getCode());

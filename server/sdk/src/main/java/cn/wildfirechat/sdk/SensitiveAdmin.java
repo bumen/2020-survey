@@ -3,7 +3,7 @@ package cn.wildfirechat.sdk;
 import cn.wildfirechat.common.APIPath;
 import cn.wildfirechat.pojos.*;
 import cn.wildfirechat.sdk.model.IMResult;
-import cn.wildfirechat.sdk.utilities.AdminHttpUtils;
+import cn.wildfirechat.sdk.utilities.ImAdminHttpUtils;
 
 import java.util.List;
 
@@ -12,19 +12,19 @@ public class SensitiveAdmin {
         String path = APIPath.Sensitive_Add;
         InputOutputSensitiveWords input = new InputOutputSensitiveWords();
         input.setWords(sensitives);
-        return AdminHttpUtils.httpJsonPost(path, input, Void.class);
+        return ImAdminHttpUtils.httpJsonPost(path, input, Void.class);
     }
 
     public static IMResult<Void> removeSensitives(List<String> sensitives) throws Exception {
         String path = APIPath.Sensitive_Del;
         InputOutputSensitiveWords input = new InputOutputSensitiveWords();
         input.setWords(sensitives);
-        return AdminHttpUtils.httpJsonPost(path, input, Void.class);
+        return ImAdminHttpUtils.httpJsonPost(path, input, Void.class);
     }
 
     public static IMResult<InputOutputSensitiveWords> getSensitives(List<String> sensitives) throws Exception {
         String path = APIPath.Sensitive_Query;
-        return AdminHttpUtils.httpJsonPost(path, null, InputOutputSensitiveWords.class);
+        return ImAdminHttpUtils.httpJsonPost(path, null, InputOutputSensitiveWords.class);
     }
 
 }

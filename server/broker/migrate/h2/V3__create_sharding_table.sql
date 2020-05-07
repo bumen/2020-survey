@@ -43,3 +43,13 @@ CREATE TABLE `t_arena_messages` (
     `_dt` DATETIME NOT NULL DEFAULT NOW(),
     UNIQUE INDEX `message_seq_arean_id_index` (`_arena_id` DESC, `_seq` DESC)
 );
+
+DROP TABLE IF EXISTS `t_battle_messages`;
+CREATE TABLE `t_battle_messages` (
+    `id` int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    `_mid` bigint(20) NOT NULL,
+    `_battle_id` varchar(64) NOT NULL,
+    `_seq` bigint(20) NOT NULL,
+    `_dt` DATETIME NOT NULL DEFAULT NOW(),
+    UNIQUE INDEX `message_seq_battle_id_index` (`_battle_id` DESC, `_seq` DESC)
+);

@@ -29,6 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 import cn.wildfirechat.common.ErrorCode;
+import cn.wildfirechat.log.Logs;
 import cn.wildfirechat.proto.WFCMessage;
 import io.moquette.BrokerConstants;
 import io.moquette.server.Constants;
@@ -38,14 +39,13 @@ import io.moquette.spi.IMessagesStore.StoredMessage;
 import io.moquette.spi.ISessionsStore;
 import io.netty.handler.codec.mqtt.MqttVersion;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import win.liyufan.im.Utility;
 
 import com.hazelcast.util.StringUtil;
 
 public class MemorySessionStore implements ISessionsStore {
     private static int dumy = 1;
-    private static final Logger LOG = LoggerFactory.getLogger(MemorySessionStore.class);
+    private static final Logger LOG = Logs.MQTT;
 
     private boolean supportMultiEndpoint = false;
 

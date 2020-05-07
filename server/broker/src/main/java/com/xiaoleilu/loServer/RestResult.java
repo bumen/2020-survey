@@ -10,12 +10,16 @@ package com.xiaoleilu.loServer;
 
 import cn.wildfirechat.common.ErrorCode;
 
+import com.google.gson.Gson;
+
 public class RestResult {
 
 
     int code;
     String msg;
     Object result;
+
+    public static final String OK_JSON = new Gson().toJson(RestResult.ok());
 
     public static RestResult ok(Object object) {
         return resultOf(ErrorCode.ERROR_CODE_SUCCESS, ErrorCode.ERROR_CODE_SUCCESS.getMsg(), object);

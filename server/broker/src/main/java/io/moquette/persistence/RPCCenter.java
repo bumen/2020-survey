@@ -15,13 +15,13 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import cn.wildfirechat.common.ErrorCode;
+import cn.wildfirechat.log.Logs;
 import io.moquette.persistence.remote.RequestInfo;
 import io.moquette.server.Server;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class RPCCenter {
-    private static final Logger LOG = LoggerFactory.getLogger(RPCCenter.class);
+    private static final Logger LOG = Logs.MQTT;
     public static final String CHECK_USER_ONLINE_REQUEST = "check_user_online";
     public static final String KICKOFF_USER_REQUEST = "kickoff_user";
 

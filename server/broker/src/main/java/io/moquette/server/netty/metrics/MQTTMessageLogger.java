@@ -16,16 +16,21 @@
 
 package io.moquette.server.netty.metrics;
 
+import java.util.List;
+
+import cn.wildfirechat.log.Logs;
 import io.moquette.server.netty.NettyUtils;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
-import io.netty.handler.codec.mqtt.*;
+import io.netty.handler.codec.mqtt.MqttMessage;
+import io.netty.handler.codec.mqtt.MqttMessageType;
+import io.netty.handler.codec.mqtt.MqttPublishMessage;
+import io.netty.handler.codec.mqtt.MqttSubAckMessage;
+import io.netty.handler.codec.mqtt.MqttSubscribeMessage;
+import io.netty.handler.codec.mqtt.MqttUnsubscribeMessage;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.List;
 
 import static io.moquette.spi.impl.Utils.messageId;
 
@@ -36,7 +41,7 @@ import static io.moquette.spi.impl.Utils.messageId;
 @Sharable
 public class MQTTMessageLogger extends ChannelDuplexHandler {
 
-    private static final Logger LOG = LoggerFactory.getLogger("messageLogger");
+    private static final Logger LOG = Logs.MQTT;
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object message) {
@@ -70,14 +75,14 @@ public class MQTTMessageLogger extends ChannelDuplexHandler {
                 break;
             case PUBLISH:
                 MqttPublishMessage publish = (MqttPublishMessage) msg;
-                LOG.info("{} PUBLISH <{}> to topics <{}>", direction, clientID, publish.variableHeader().topicName());
+                LOG.debug("{} PUBLISH <{}> to topics <{}>", direction, clientID, publish.variableHeader().topicName());
                 break;
             case PUBREC:
             case PUBCOMP:
             case PUBREL:
             case PUBACK:
             case UNSUBACK:
-                LOG.info("{} {} <{}> packetID <{}>", direction, messageType, clientID, messageId(msg));
+                LOG.debug("{} {} <{}> packetID <{}>", direction, messageType, clientID, messageId(msg));
                 break;
             case SUBACK:
                 MqttSubAckMessage suback = (MqttSubAckMessage) msg;

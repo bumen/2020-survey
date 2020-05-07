@@ -66,6 +66,7 @@ public class ProtoConstants {
         int Pull_Group = 2;
         int Pull_World = 3;
         int Pull_Arena = 4;
+        int Pull_Battle = 5;
     }
 
     //message UserResult -> code

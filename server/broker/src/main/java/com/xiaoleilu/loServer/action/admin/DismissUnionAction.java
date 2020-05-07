@@ -13,7 +13,7 @@ import java.util.concurrent.Executor;
 
 import cn.wildfirechat.common.APIPath;
 import cn.wildfirechat.common.ErrorCode;
-import cn.wildfirechat.pojos.InputCreateGroup;
+import cn.wildfirechat.pojos.InputDismissGroup;
 import cn.wildfirechat.pojos.OutputCreateGroupResult;
 import io.moquette.persistence.RPCCenter;
 import io.moquette.persistence.TargetEntry;
@@ -30,9 +30,9 @@ import com.xiaoleilu.loServer.annotation.Route;
 import com.xiaoleilu.loServer.handler.Request;
 import com.xiaoleilu.loServer.handler.Response;
 
-@Route(APIPath.Create_Group)
+@Route(APIPath.Union_Dismiss)
 @HttpMethod("POST")
-public class CreateArenaAction extends AdminAction {
+public class DismissUnionAction extends AdminAction {
 
     @Override
     public boolean isTransactionAction() {
@@ -42,9 +42,9 @@ public class CreateArenaAction extends AdminAction {
     @Override
     public boolean action(Request request, Response response) {
         if (request.getNettyRequest() instanceof FullHttpRequest) {
-            InputCreateGroup inputCreateGroup = getRequestBody(request.getNettyRequest(), InputCreateGroup.class);
+            InputDismissGroup inputCreateGroup = getRequestBody(request.getNettyRequest(), InputDismissGroup.class);
             if (inputCreateGroup.isValide()) {
-                RPCCenter.getInstance().sendRequest(inputCreateGroup.getOperator(), null, "", IMTopic.CreateGroupTopic, inputCreateGroup.toProtoGroupRequest().toByteArray(), inputCreateGroup.getOperator(), TargetEntry.Type.TARGET_TYPE_USER, new RPCCenter.Callback() {
+                RPCCenter.getInstance().sendRequest(inputCreateGroup.getOperator(), null,"",  IMTopic.DismissUnionTopic, inputCreateGroup.toProtoGroupRequest().toByteArray(), inputCreateGroup.getOperator(), TargetEntry.Type.TARGET_TYPE_USER, new RPCCenter.Callback() {
                     @Override
                     public void onSuccess(byte[] result) {
                         ByteBuf byteBuf = Unpooled.buffer();

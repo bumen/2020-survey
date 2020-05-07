@@ -15,6 +15,7 @@ import cn.wildfirechat.proto.ProtoConstants;
 import cn.wildfirechat.proto.WFCMessage;
 import io.moquette.BrokerConstants;
 import io.moquette.service.ArenaMessageService;
+import io.moquette.service.BattleMessageService;
 import io.moquette.service.WorldMessageService;
 import io.moquette.spi.impl.Qos1PublishHandler;
 import io.netty.buffer.ByteBuf;
@@ -153,6 +154,8 @@ public class SendMessageHandler extends IMHandler<WFCMessage.Message> {
                     WorldMessageService.INSTANCE.sendMessage(fromUser, clientID, section, message);
                 } else if (conversationType == ProtoConstants.ConversationType.ConversationType_ARENA) {
                     ArenaMessageService.INSTANCE.sendMessage(fromUser, clientID, section, message);
+                } else if(conversationType == ProtoConstants.ConversationType.ConversationType_BATTLE) {
+                    BattleMessageService.INSTANCE.sendMessage(fromUser, clientID, section, message);
                 } else {
                     saveAndPublish(fromUser, clientID, message, ignoreMsg);
                 }

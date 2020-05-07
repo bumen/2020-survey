@@ -36,6 +36,9 @@ import com.playcrab.thread.NamedThreadFactory;
 import com.playcrab.util.TimeUtils;
 
 /**
+ *
+ * 世界频道
+ *
  * @date 2020-04-28
  * @author zhangyuqiang02@playcrab.com
  */
@@ -100,8 +103,8 @@ public enum WorldMessageService {
         // 集群通知
         notifyClusterMessageSeq(message.getMessageId(), seqId);
 
-        // 通知用户
-        notifySectionSeq.putIfAbsent(section, seqId);
+        // 通知用户当前最大号
+        notifySectionSeq.put(section, seqId);
 
         logger.debug("WorldMessageService#sendMessage user:{} section:{} seq:{} ok", userId,
             section, seqId);
@@ -117,9 +120,12 @@ public enum WorldMessageService {
     /**
      * 通知所有在线玩家拉取世界频道消息
      * @param section 区服
-     * @param seq 需要拉取的最小顺序号
+     * @param seq 需要拉取的最大顺序号
      */
     public void notifyOnlineUser(String section, long seq) {
+        logger.debug("WorldMessageService#notifyOnlineUser section:{} seq:{} start...",
+            section, seq);
+
         WFCMessage.NotifyMessage notifyMessage = WFCMessage.NotifyMessage
             .newBuilder()
             .setType(PullType.Pull_World)
@@ -136,19 +142,27 @@ public enum WorldMessageService {
 
         int c = 0;
         Set<String> onlineClientIds = connectionDescriptors.getSectionClients(section);
+        if (onlineClientIds == null) {
+            return;
+        }
+
         for (String cid : onlineClientIds) {
-            boolean targetIsActive = this.connectionDescriptors.isConnected(cid);
-            if (targetIsActive) {
+            try {
+                boolean targetIsActive = this.connectionDescriptors.isConnected(cid);
+                if (targetIsActive) {
 
-                boolean sent = this.publisher.sendPublish(cid, publishMsg);
+                    boolean sent = this.publisher.sendPublish(cid, publishMsg);
 
-                logger.debug("WorldMessageService#notifyOnlineUser section:{} cid:{} finish:{}",
-                    section,
-                    cid, sent);
-            } else {
-                logger.debug("WorldMessageService#notifyOnlineUser section:{} cid:{} no online",
-                    section,
-                    cid);
+                    logger.debug("WorldMessageService#notifyOnlineUser section:{} cid:{} finish:{}",
+                        section,
+                        cid, sent);
+                } else {
+                    logger.debug("WorldMessageService#notifyOnlineUser section:{} cid:{} no online",
+                        section,
+                        cid);
+                }
+            } catch (Exception e) {
+                logger.error("WorldMessageService#notifyOnlineUser section:{} cid:{} error", section, cid, e);
             }
             c++;
         }
@@ -165,20 +179,18 @@ public enum WorldMessageService {
     public void doSend() {
         // 最快1/2秒推送一次
         final int tick = 500;
-        long b;
         while (started) {
+            try {
+                Iterator<Map.Entry<String, Long>> it = notifySectionSeq.entrySet().iterator();
+                while (it.hasNext()) {
+                    Map.Entry<String, Long> entry = it.next();
+                    it.remove();
 
-            b = TimeUtils.now();
-
-            Iterator<Map.Entry<String, Long>> it = notifySectionSeq.entrySet().iterator();
-            while (it.hasNext()) {
-                Map.Entry<String, Long> entry = it.next();
-                it.remove();
-
-                notifyOnlineUser(entry.getKey(), entry.getValue());
+                    notifyOnlineUser(entry.getKey(), entry.getValue());
+                }
+            } catch (Exception e) {
+                logger.error("WorldMessageService#doSend error", e);
             }
-
-            logger.debug("WorldMessageService#doSend finish time:{}", TimeUtils.now() - b);
 
             try {
                 Thread.sleep(tick);
@@ -195,9 +207,28 @@ public enum WorldMessageService {
         // messageId是全局的，messageSeq是跟个人相关的，理论上messageId的增长数度远远大于seq。
         // 考虑到一种情况，当服务器发生变化，用户发生迁移后，messageSeq还需要保持有序。 要么把Seq持久化，要么在迁移后Seq取一个肯定比以前更大的数字（这个数字就是messageId）
         // 这里选择使用后面一种情况
-        long messageSeq = 0;
-
         ConcurrentSkipListMap<Long, Long> maps = getWorldMessages(section);
+
+        long messageSeq = 0;
+        Long v = Long.MIN_VALUE;
+        while (v != null) {
+            messageSeq = nextSeqId(maps, messageId);
+            v = maps.putIfAbsent(messageSeq, messageId);
+        }
+
+        logger.debug("WorldMessageService#insertMessages section:{} seq:{} ok",
+            section, messageSeq);
+
+        if (maps.size() > MAX_MESSAGE_QUEUE) {
+            maps.remove(maps.firstKey());
+        }
+
+        messagesStore.getDatabaseStore().persistWorldMessage(section, messageId, messageSeq);
+        return messageSeq;
+    }
+
+    private long nextSeqId(ConcurrentSkipListMap<Long, Long> maps, long messageId) {
+        long messageSeq = 0;
 
         Map.Entry<Long, Long> lastEntry = maps.lastEntry();
         if (lastEntry != null) {
@@ -212,12 +243,6 @@ public enum WorldMessageService {
             messageSeq = messageId;
         }
 
-        maps.put(messageSeq, messageId);
-        if (maps.size() > MAX_MESSAGE_QUEUE) {
-            maps.remove(maps.firstKey());
-        }
-
-        messagesStore.getDatabaseStore().persistWorldMessage(section, messageId, messageSeq);
         return messageSeq;
     }
 

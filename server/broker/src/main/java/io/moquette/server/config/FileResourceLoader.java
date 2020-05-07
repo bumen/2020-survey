@@ -20,12 +20,13 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.Reader;
+
+import cn.wildfirechat.log.Logs;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class FileResourceLoader implements IResourceLoader {
 
-    private static final Logger LOG = LoggerFactory.getLogger(FileResourceLoader.class);
+    private static final Logger LOG = Logs.SERVER;
 
     private final File defaultFile;
     private final String parentPath;

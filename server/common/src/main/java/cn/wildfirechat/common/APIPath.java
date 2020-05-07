@@ -67,4 +67,14 @@ public interface APIPath {
 
     String Robot_User_Info = "/robot/user_info";
     String Robot_Message_Send = "/robot/message/send";
+
+
+    // 联盟频道
+    String Union_Create = "/admin/union/create";
+    String Union_Member_Add = "/admin/union/add";
+    String Union_Member_Quit = "/admin/union/quit";
+    String Union_Dismiss = "/admin/union/dismiss";
+    // 战场频道
+    String Battle_Member_Join = "/admin/battle/member/join";
+    String Battle_Member_Quit = "/admin/battle/member/quit";
 }

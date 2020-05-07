@@ -16,18 +16,19 @@
 
 package io.moquette.server.config;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import java.io.Reader;
 import java.text.ParseException;
 import java.util.Properties;
+
+import cn.wildfirechat.log.Logs;
+import org.slf4j.Logger;
 
 /**
  * Configuration that loads config stream from a {@link IResourceLoader} instance.
  */
 public class ResourceLoaderConfig extends IConfig {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ResourceLoaderConfig.class);
+    private static final Logger LOG = Logs.SERVER;
 
     private final Properties m_properties;
     private final IResourceLoader resourceLoader;

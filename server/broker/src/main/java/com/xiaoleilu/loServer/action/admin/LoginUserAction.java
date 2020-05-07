@@ -58,27 +58,63 @@ public class LoginUserAction extends AdminAction {
         if (request.getNettyRequest() instanceof FullHttpRequest) {
             InputOutputUserInfo gameUser = getRequestBody(request.getNettyRequest(),
                 InputOutputUserInfo.class);
-            // TODO clientId 判断
-            if (gameUser == null || StringUtil.isNullOrEmpty(gameUser.getUserId())) {
+            if (gameUser == null) {
                 response.setStatus(HttpResponseStatus.OK);
                 RestResult result = RestResult.resultOf(ErrorCode.INVALID_PARAMETER);
                 response.setContent(new Gson().toJson(result));
 
-                logger.warn("LoginUserAction#action game user id error");
+                logger.warn("LoginUserAction#action game user null error");
 
                 return true;
             }
 
             String userId = gameUser.getUserId();
+            if (StringUtil.isNullOrEmpty(gameUser.getUserId())) {
+                response.setStatus(HttpResponseStatus.OK);
+                RestResult result = RestResult.resultOf(ErrorCode.INVALID_PARAMETER);
+                response.setContent(new Gson().toJson(result));
+
+                logger.warn("LoginUserAction#action game user id:{} error", userId);
+                return true;
+            }
             // 客户端id
-            String clientId = "";
+            String clientId = gameUser.getClientId();
+            if (StringUtil.isNullOrEmpty(clientId)) {
+                response.setStatus(HttpResponseStatus.OK);
+                RestResult result = RestResult.resultOf(ErrorCode.INVALID_PARAMETER);
+                response.setContent(new Gson().toJson(result));
+
+                logger.warn("LoginUserAction#action game user clientId:{} error", clientId);
+                return true;
+            }
+
             // 区服id
-            String section = "";
+            String section = gameUser.getSection();
+            if (StringUtil.isNullOrEmpty(section)) {
+                response.setStatus(HttpResponseStatus.OK);
+                RestResult result = RestResult.resultOf(ErrorCode.INVALID_PARAMETER);
+                response.setContent(new Gson().toJson(result));
+
+                logger.warn("LoginUserAction#action game user section:{} error", section);
+                return true;
+            }
+
+            String arenaId = gameUser.getArenaId();
+            if (StringUtil.isNullOrEmpty(arenaId)) {
+                response.setStatus(HttpResponseStatus.OK);
+                RestResult result = RestResult.resultOf(ErrorCode.INVALID_PARAMETER);
+                response.setContent(new Gson().toJson(result));
+
+                logger.warn("LoginUserAction#action game user arenaId:{} error", arenaId);
+                return true;
+            }
+
+            logger.info("LoginUserAction#action section:{} user:{} client:{} login...", section,
+                userId, clientId);
 
             WFCMessage.User user = messagesStore.getUserInfo(userId);
             if (user == null) {
                 try {
-                    // TODO gameUser 无用属性删除
                     // 1 创建用户
                     createUser(gameUser);
                     logger.error("LoginUserAction#createUser user:{} ok", userId);
@@ -92,15 +128,8 @@ public class LoginUserAction extends AdminAction {
 
                     return true;
                 }
-
-                // 2 加入世界频道
-                //joinWorld(userId, worldId);
-
-                // 3 加入区域频道
-                // joinArena(userId, areanId);
             }
 
-            // TODO clientId获取
             // 4. 获取token
             return getToken(userId, clientId, section, response);
         }
@@ -135,10 +164,10 @@ public class LoginUserAction extends AdminAction {
         if (inputCreateUser.getPortrait() != null) {
             newUserBuilder.setPortrait(inputCreateUser.getPortrait());
         }
+
         // 区服
-        if (inputCreateUser.getCompany() != null) {
-            newUserBuilder.setCompany(inputCreateUser.getCompany());
-        }
+        newUserBuilder.setAddress(inputCreateUser.getSection());
+        newUserBuilder.setCompany(inputCreateUser.getArenaId());
 
         // 类型
         newUserBuilder.setType(UserType.UserType_Normal);

@@ -282,8 +282,7 @@ public class MessagesPublisher {
                     ByteBuf payload = Unpooled.buffer();
                     byte[] byteData = notifyMessage.toByteArray();
                     payload.ensureWritable(byteData.length).writeBytes(byteData);
-                    MqttPublishMessage publishMsg;
-                    publishMsg = notRetainedPublish(IMTopic.NotifyMessageTopic, MqttQoS.AT_MOST_ONCE, payload);
+                    MqttPublishMessage publishMsg = notRetainedPublish(IMTopic.NotifyMessageTopic, MqttQoS.AT_MOST_ONCE, payload);
 
                     boolean sent = this.messageSender.sendPublish(targetSession.getClientSession(), publishMsg);
                     if (sent) {
