@@ -2249,8 +2249,8 @@ public class DatabaseStore {
                 ", `_mobile`=?" +
                 ", `_gender`=?" +
                 ", `_email`=?" +
-                ", `_address`=?" +
-                ", `_company`=?" +
+                ", `_section`=?" +
+                ", `_arena`=?" +
                 ", `_social`=?" +
                 ", `_extra`=?" +
                 ", `_type`=?" +

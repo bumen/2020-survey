@@ -7,7 +7,7 @@ import java.util.List;
 import cn.wildfirechat.common.ErrorCode;
 import cn.wildfirechat.pojos.BroadMessageResult;
 import cn.wildfirechat.pojos.Conversation;
-import cn.wildfirechat.pojos.InputOutputUserInfo;
+import cn.wildfirechat.pojos.LoginUserInfo;
 import cn.wildfirechat.pojos.MessagePayload;
 import cn.wildfirechat.pojos.MultiMessageResult;
 import cn.wildfirechat.pojos.OutputCreateGroupResult;
@@ -17,6 +17,7 @@ import cn.wildfirechat.pojos.OutputGroupMemberList;
 import cn.wildfirechat.pojos.PojoGroupInfo;
 import cn.wildfirechat.pojos.PojoGroupMember;
 import cn.wildfirechat.pojos.SendMessageResult;
+import cn.wildfirechat.pojos.UpdateUserInfo;
 import cn.wildfirechat.proto.ProtoConstants;
 import cn.wildfirechat.sdk.model.IMResult;
 import cn.wildfirechat.sdk.utilities.ImAdminHttpUtils;
@@ -38,7 +39,7 @@ public class Main {
         //初始化服务API
         ImAdminHttpUtils.init("http://localhost:18080", "123456");
 
-        //testUser();
+        testUser();
         // testUserRelation();
         // testGroup();
         // testChatroom();
@@ -47,7 +48,7 @@ public class Main {
 
         // testUnion();
 
-        testArenaMessage();
+        //testArenaMessage();
 
         System.out.println("Congratulation, all admin test case passed!!!!!!!");
     }
@@ -111,11 +112,10 @@ public class Main {
     //****  用户相关的API
     //***********************************************
     static void testUser() throws Exception {
-        InputOutputUserInfo userInfo = new InputOutputUserInfo();
+        LoginUserInfo userInfo = new LoginUserInfo();
         userInfo.setUserId("userId1");
         userInfo.setName("user1");
-        userInfo.setMobile("13900000000");
-        userInfo.setDisplayName("user 1");
+        userInfo.setPortrait("p1");
         userInfo.setClientId("3333333");
         userInfo.setSection("10001");
         userInfo.setArenaId("10001_001");
@@ -127,6 +127,13 @@ public class Main {
             System.out.println("Create user failure: " +  new Gson().toJson(resultCreateUser));
             System.exit(-1);
         }
+
+        UpdateUserInfo updateUserInfo = new UpdateUserInfo();
+        updateUserInfo.setUserId(userInfo.getUserId());
+        updateUserInfo.setName(userInfo.getName());
+        updateUserInfo.setPortrait("p2");
+        updateUserInfo.setArenaId("10001_002");
+        ImUserAdmin.updateUser(updateUserInfo);
 
         IMResult<Void> voidResult = ImUserAdmin.joinBattle(userInfo.getUserId(), "battle_1");
         if (voidResult != null && voidResult.getErrorCode() == ErrorCode.ERROR_CODE_SUCCESS) {

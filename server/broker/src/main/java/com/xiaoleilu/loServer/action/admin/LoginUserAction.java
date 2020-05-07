@@ -15,7 +15,7 @@ import cn.wildfirechat.common.APIPath;
 import cn.wildfirechat.common.ErrorCode;
 import cn.wildfirechat.log.Logs;
 import cn.wildfirechat.pojos.InputGetToken;
-import cn.wildfirechat.pojos.InputOutputUserInfo;
+import cn.wildfirechat.pojos.LoginUserInfo;
 import cn.wildfirechat.pojos.OutputGetIMTokenData;
 import cn.wildfirechat.proto.ProtoConstants.UserType;
 import cn.wildfirechat.proto.WFCMessage;
@@ -56,8 +56,8 @@ public class LoginUserAction extends AdminAction {
     @Override
     public boolean action(Request request, Response response) {
         if (request.getNettyRequest() instanceof FullHttpRequest) {
-            InputOutputUserInfo gameUser = getRequestBody(request.getNettyRequest(),
-                InputOutputUserInfo.class);
+            LoginUserInfo gameUser = getRequestBody(request.getNettyRequest(),
+                LoginUserInfo.class);
             if (gameUser == null) {
                 response.setStatus(HttpResponseStatus.OK);
                 RestResult result = RestResult.resultOf(ErrorCode.INVALID_PARAMETER);
@@ -146,7 +146,7 @@ public class LoginUserAction extends AdminAction {
      *
      * @param inputCreateUser 用户
      */
-    private void createUser(InputOutputUserInfo inputCreateUser)
+    private void createUser(LoginUserInfo inputCreateUser)
         throws Exception {
         WFCMessage.User.Builder newUserBuilder = WFCMessage.User.newBuilder()
             .setUid(inputCreateUser.getUserId());
@@ -154,11 +154,6 @@ public class LoginUserAction extends AdminAction {
         // 名称
         if (inputCreateUser.getName() != null) {
             newUserBuilder.setName(inputCreateUser.getName());
-        }
-        if (inputCreateUser.getDisplayName() != null) {
-            newUserBuilder.setDisplayName(
-                StringUtil.isNullOrEmpty(inputCreateUser.getDisplayName()) ? inputCreateUser
-                    .getName() : inputCreateUser.getDisplayName());
         }
         // 头像
         if (inputCreateUser.getPortrait() != null) {

@@ -11,7 +11,7 @@ package com.xiaoleilu.loServer.action.admin;
 import cn.wildfirechat.common.APIPath;
 import cn.wildfirechat.common.ErrorCode;
 import cn.wildfirechat.log.Logs;
-import cn.wildfirechat.pojos.InputOutputUserInfo;
+import cn.wildfirechat.pojos.UpdateUserInfo;
 import cn.wildfirechat.proto.WFCMessage;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -39,8 +39,8 @@ public class ModifyUserAction extends AdminAction {
     @Override
     public boolean action(Request request, Response response) {
         if (request.getNettyRequest() instanceof FullHttpRequest) {
-            InputOutputUserInfo gameUser = getRequestBody(request.getNettyRequest(),
-                InputOutputUserInfo.class);
+            UpdateUserInfo gameUser = getRequestBody(request.getNettyRequest(),
+                UpdateUserInfo.class);
 
             if (gameUser == null || StringUtil.isNullOrEmpty(gameUser.getUserId())) {
                 response.setStatus(HttpResponseStatus.OK);
@@ -61,14 +61,45 @@ public class ModifyUserAction extends AdminAction {
                     .resultOf(ErrorCode.ERROR_CODE_NOT_EXIST);
                 response.setContent(new Gson().toJson(result));
 
-                logger.warn("ModifyUserAction#modify user:{} not exsit", userId);
+                logger.warn("ModifyUserAction#action user:{} not exsit", userId);
 
                 return true;
             }
 
+            String name = gameUser.getName();
+            if (StringUtil.isNullOrEmpty(name)) {
+                response.setStatus(HttpResponseStatus.OK);
+                RestResult result = RestResult.resultOf(ErrorCode.INVALID_PARAMETER);
+                response.setContent(new Gson().toJson(result));
+
+                logger.warn("ModifyUserAction#action game user:{} name:{} error", userId, name);
+                return true;
+            }
+
+            String portrait = gameUser.getPortrait();
+            if (StringUtil.isNullOrEmpty(portrait)) {
+                response.setStatus(HttpResponseStatus.OK);
+                RestResult result = RestResult.resultOf(ErrorCode.INVALID_PARAMETER);
+                response.setContent(new Gson().toJson(result));
+
+                logger.warn("ModifyUserAction#action game user:{} portrait:{} error", userId, portrait);
+                return true;
+            }
+
+            String arenaId = gameUser.getArenaId();
+            if (StringUtil.isNullOrEmpty(arenaId)) {
+                response.setStatus(HttpResponseStatus.OK);
+                RestResult result = RestResult.resultOf(ErrorCode.INVALID_PARAMETER);
+                response.setContent(new Gson().toJson(result));
+
+                logger.warn("ModifyUserAction#action game user:{} arenaId:{} error", userId, arenaId);
+                return true;
+            }
+
             WFCMessage.User.Builder builder = user.toBuilder();
-            builder.setName(gameUser.getName());
-            builder.setPortrait(gameUser.getPortrait());
+            builder.setName(name);
+            builder.setPortrait(portrait);
+            builder.setCompany(arenaId);
 
             try {
                 messagesStore.addUserInfo(builder.build(), "");

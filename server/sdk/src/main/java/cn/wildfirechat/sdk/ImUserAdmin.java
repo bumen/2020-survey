@@ -17,9 +17,21 @@ public class ImUserAdmin {
      * @return
      * @throws Exception 连接异常
      */
-    public static IMResult<OutputGetIMTokenData> login(InputOutputUserInfo user) throws Exception {
+    public static IMResult<OutputGetIMTokenData> login(LoginUserInfo user) throws Exception {
         String path = APIPath.Login_User;
         return ImAdminHttpUtils.httpJsonPost(path, user, OutputGetIMTokenData.class);
+    }
+
+    /**
+     * 修改玩家信息
+     * @param user 玩家数据
+     * @return 成功失败
+     * @throws Exception 连接异步
+     */
+    public static IMResult<Void> updateUser(UpdateUserInfo user) throws Exception {
+        String path = APIPath.Modify_User;
+
+        return ImAdminHttpUtils.httpJsonPost(path, user, Void.class);
     }
 
     /**
