@@ -13,6 +13,7 @@ import java.util.Base64;
 import java.util.concurrent.Executor;
 
 import cn.wildfirechat.common.ErrorCode;
+import cn.wildfirechat.log.Logs;
 import cn.wildfirechat.proto.WFCMessage;
 import io.moquette.persistence.MemorySessionStore;
 import io.moquette.persistence.RPCCenter;
@@ -34,7 +35,7 @@ import com.xiaoleilu.loServer.handler.Response;
 @Route("/im")
 @HttpMethod("POST")
 public class IMAction extends Action {
-
+    protected static final org.slf4j.Logger LOG = Logs.HTTP;
     @Override
     public boolean action(Request request, Response response) {
         if (request.getNettyRequest() instanceof FullHttpRequest) {

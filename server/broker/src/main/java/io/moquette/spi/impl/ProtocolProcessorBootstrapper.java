@@ -26,6 +26,8 @@ import io.moquette.interception.InterceptHandler;
 import io.moquette.server.ConnectionDescriptorStore;
 import io.moquette.server.Server;
 import io.moquette.server.config.IConfig;
+import io.moquette.service.ArenaMessageService;
+import io.moquette.service.BattleMessageService;
 import io.moquette.service.WorldMessageService;
 import io.moquette.spi.IMessagesStore;
 import io.moquette.spi.ISessionsStore;
@@ -177,6 +179,8 @@ public class ProtocolProcessorBootstrapper {
         m_processor.shutdown();
 
         WorldMessageService.INSTANCE.shutdown();
+        ArenaMessageService.INSTANCE.shutdown();
+        BattleMessageService.INSTANCE.shutdown();
     }
 
     public ConnectionDescriptorStore getConnectionDescriptors() {

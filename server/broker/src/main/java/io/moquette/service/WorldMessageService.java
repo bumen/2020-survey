@@ -114,7 +114,7 @@ public enum WorldMessageService {
      *  TODO 集群开发时实现
      */
     public void notifyClusterMessageSeq(long mid, long seq) {
-
+        logger.debug("WorldMessageService#notifyClusterMessageSeq mid:{} seq:{}", mid, seq);
     }
 
     /**

@@ -119,6 +119,18 @@
             <version>3.9.4</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.playcrab</groupId>
+            <artifactId>CHR</artifactId>
+            <version>1.0.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.beanshell</groupId>
+            <artifactId>bsh</artifactId>
+            <version>2.0b5</version>
+        </dependency>
+
         <!-- https://mvnrepository.com/artifact/com.xiaoleilu/hutool -->
         <dependency>
             <groupId>com.xiaoleilu</groupId>

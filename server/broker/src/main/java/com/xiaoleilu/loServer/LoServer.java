@@ -1,5 +1,7 @@
 package com.xiaoleilu.loServer;
 
+import java.util.concurrent.TimeUnit;
+
 import cn.wildfirechat.log.Logs;
 import io.moquette.spi.IMessagesStore;
 import io.moquette.spi.ISessionsStore;
@@ -15,6 +17,8 @@ import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
 import io.netty.handler.stream.ChunkedWriteHandler;
+import io.netty.util.concurrent.DefaultThreadFactory;
+import io.netty.util.concurrent.Future;
 import win.liyufan.im.Utility;
 
 import com.xiaoleilu.hutool.util.DateUtil;
@@ -48,6 +52,10 @@ public class LoServer {
         this.sessionsStore = sessionsStore;
     }
 
+    private EventLoopGroup bossGroup;
+
+    private EventLoopGroup workerGroup;
+
     /**
 	 * 启动服务
 	 * @throws InterruptedException 
@@ -56,8 +64,8 @@ public class LoServer {
 		long start = System.currentTimeMillis();
 		
 		// Configure the server.
-		final EventLoopGroup bossGroup = new NioEventLoopGroup(2);
-		final EventLoopGroup workerGroup = new NioEventLoopGroup();
+        bossGroup = new NioEventLoopGroup(2, new DefaultThreadFactory("HTTP-Boss"));
+        workerGroup = new NioEventLoopGroup(0, new DefaultThreadFactory("HTTP-Worker"));
 
         registerAllAction();
 
@@ -112,23 +120,35 @@ public class LoServer {
 		}
 	}
     public void shutdown() {
-        if (this.channel!= null) {
-            this.channel.close();
-            try {
-                this.channel.closeFuture().sync();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+        Logger.error("Lo server shutdown start...");
+
+        if (bossGroup == null || workerGroup == null) {
+            Logger.error("Lo server is not initialized");
+            throw new IllegalStateException("Invoked close on an Acceptor that wasn't initialized");
         }
 
-        if (this.adminChannel != null) {
-            this.adminChannel.close();
-            try {
-                this.adminChannel.closeFuture().sync();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+        Future<?> workerWaiter = bossGroup.shutdownGracefully();
+        Future<?> bossWaiter = workerGroup.shutdownGracefully();
+
+        Logger.info("Waiting for worker and boss event loop groups to terminate...");
+        try {
+            bossWaiter.await(2, TimeUnit.SECONDS);
+            workerWaiter.await(2, TimeUnit.SECONDS);
+        } catch (InterruptedException iex) {
+            Logger.warn("An InterruptedException was caught while waiting for event loops to terminate...");
         }
+
+        if (!bossGroup.isTerminated()) {
+            Logger.warn("Forcing shutdown of boss event loop...");
+            bossGroup.shutdownGracefully(0L, 0L, TimeUnit.MILLISECONDS);
+        }
+
+        if (!workerGroup.isTerminated()) {
+            Logger.warn("Forcing shutdown of worker event loop...");
+            workerGroup.shutdownGracefully(0L, 0L, TimeUnit.MILLISECONDS);
+        }
+
+        Logger.error("Lo server shutdown finish");
     }
 
     private void registerAllAction() {

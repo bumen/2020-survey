@@ -253,12 +253,15 @@ public class ServerSetting {
 		if(false == path.startsWith(StrUtil.SLASH)) {
 			path = StrUtil.SLASH + path;
 		}
-		String method = "GET";
+		String[] method = {"GET"};
         HttpMethod methodAnnotation = action.getClass().getAnnotation(HttpMethod.class);
         if (methodAnnotation != null) {
             method = methodAnnotation.value();
         }
-		ServerSetting.getActionMap(method).put(path, action);
+
+        for (String m : method) {
+		    ServerSetting.getActionMap(m).put(path, action);
+        }
 	}
 	
 	/**

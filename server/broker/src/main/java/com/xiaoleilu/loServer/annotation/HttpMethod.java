@@ -16,5 +16,5 @@ import java.lang.annotation.RetentionPolicy;
 @Retention(RetentionPolicy.RUNTIME)/*保留的时间长短*/
 @Inherited/*只用于class，可被子类继承*/
 public @interface HttpMethod {
-    String value() default "GET";
+    String[] value() default "GET";
 }

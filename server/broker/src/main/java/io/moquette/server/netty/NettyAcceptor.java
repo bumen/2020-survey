@@ -64,6 +64,7 @@ import io.netty.handler.codec.mqtt.MqttDecoder;
 import io.netty.handler.codec.mqtt.MqttEncoder;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.IdleStateHandler;
+import io.netty.util.concurrent.DefaultThreadFactory;
 import io.netty.util.concurrent.Future;
 import org.slf4j.Logger;
 
@@ -151,8 +152,8 @@ public class NettyAcceptor implements ServerAcceptor {
             channelClass = EpollServerSocketChannel.class;
         } else {
             LOG.info("Netty is using NIO");
-            m_bossGroup = new NioEventLoopGroup(1);
-            m_workerGroup = new NioEventLoopGroup();
+            m_bossGroup = new NioEventLoopGroup(1, new DefaultThreadFactory("MQTT-Boss"));
+            m_workerGroup = new NioEventLoopGroup(0, new DefaultThreadFactory("MQTT-Worker"));
             channelClass = NioServerSocketChannel.class;
         }
 

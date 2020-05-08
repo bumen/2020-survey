@@ -122,6 +122,8 @@ public class Server {
         LOG.info(BANNER);
     }
 
+    private LoServer httpServer;
+
     public static void start(String[] args) throws IOException {
         instance = new Server();
         final IConfig config = defaultConfig();
@@ -138,9 +140,9 @@ public class Server {
         AdminAction.setSecretKey(config.getProperty(HTTP_SERVER_SECRET_KEY));
         AdminAction.setNoCheckTime(config.getProperty(HTTP_SERVER_API_NO_CHECK_TIME));
 
-        final LoServer httpServer = new LoServer(httpLocalPort, httpAdminPort, instance.m_processor.getMessagesStore(), instance.m_store.sessionsStore());
+        instance.httpServer = new LoServer(httpLocalPort, httpAdminPort, instance.m_processor.getMessagesStore(), instance.m_store.sessionsStore());
         try {
-            httpServer.start();
+            instance.httpServer.start();
         } catch (InterruptedException e) {
             e.printStackTrace();
             Utility.printExecption(LOG, e);
@@ -150,8 +152,8 @@ public class Server {
         pushServer.init(config, instance.getStore().sessionsStore());
 
         //Bind  a shutdown hook
-        Runtime.getRuntime().addShutdownHook(new Thread(instance::stopServer));
-        Runtime.getRuntime().addShutdownHook(new Thread(httpServer::shutdown));
+        // Runtime.getRuntime().addShutdownHook(new Thread(instance::stopServer));
+        // Runtime.getRuntime().addShutdownHook(new Thread(httpServer::shutdown));
 
         LOG.info("Wildfire IM server start success...");
     }
@@ -454,6 +456,8 @@ public class Server {
         System.out.println("Server will flush data to db before shutting down, please wait 5 seconds!");
         LOG.info("Unbinding server from the configured ports");
         m_shutdowning = true;
+
+        httpServer.shutdown();
 
         m_acceptor.close();
         LOG.trace("Stopping MQTT protocol processor");
