@@ -3,21 +3,11 @@ package com.xiaoleilu.loServer.handler;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-
-import com.xiaoleilu.hutool.http.HttpUtil;
-import com.xiaoleilu.hutool.lang.Conver;
-import com.xiaoleilu.hutool.log.Log;
-import com.xiaoleilu.hutool.log.StaticLog;
-import com.xiaoleilu.hutool.util.CharsetUtil;
-import com.xiaoleilu.hutool.util.DateUtil;
-import com.xiaoleilu.hutool.util.StrUtil;
-import com.xiaoleilu.hutool.util.URLUtil;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -38,6 +28,8 @@ import io.netty.handler.codec.http.multipart.HttpPostRequestDecoder;
 import io.netty.handler.codec.http.multipart.InterfaceHttpData;
 import io.netty.handler.codec.http.multipart.InterfaceHttpData.HttpDataType;
 import org.slf4j.LoggerFactory;
+
+import com.playcrab.util.StringUtils;
 
 /**
  * Http请求对象
@@ -75,7 +67,7 @@ public class Request {
 	private Request(ChannelHandlerContext ctx, FullHttpRequest nettyRequest) {
 		this.nettyRequest = nettyRequest;
 		final String uri = nettyRequest.uri();
-		this.path = URLUtil.getPath(getUri());
+		this.path = StringUtils.getPath(getUri());
 
 		this.putHeadersAndCookies(nettyRequest.headers());
 
@@ -197,7 +189,7 @@ public class Request {
 	 */
 	public boolean isIE() {
 		String userAgent = getHeader("User-Agent");
-		if (StrUtil.isNotBlank(userAgent)) {
+		if (StringUtils.isNullOrEmpty(userAgent)) {
 			userAgent = userAgent.toUpperCase();
 			if (userAgent.contains("MSIE") || userAgent.contains("TRIDENT")) {
 				return true;
@@ -241,18 +233,18 @@ public class Request {
 	 */
 	public String getParam(String name, Charset charset) {
 		if (null == charset) {
-			charset = Charset.forName(CharsetUtil.ISO_8859_1);
+			charset = Charset.forName("ISO-8859-1");
 		}
 
-		String destCharset = CharsetUtil.UTF_8;
+		String destCharset = "UTF-8";
 		if (isIE()) {
 			// IE浏览器GET请求使用GBK编码
-			destCharset = CharsetUtil.GBK;
+			destCharset = "GBK";
 		}
 
 		String value = getParam(name);
 		if (METHOD_GET.equalsIgnoreCase(getMethod())) {
-			value = CharsetUtil.convert(value, charset.toString(), destCharset);
+			value = StringUtils.convert(value, charset.toString(), destCharset);
 		}
 		return value;
 	}
@@ -264,101 +256,7 @@ public class Request {
 	 */
 	public String getParam(String name, String defaultValue) {
 		String param = getParam(name);
-		return StrUtil.isBlank(param) ? defaultValue : param;
-	}
-
-	/**
-	 * @param name 参数名
-	 * @param defaultValue 当客户端未传参的默认值
-	 * @return 获得Integer类型请求参数
-	 */
-	public Integer getIntParam(String name, Integer defaultValue) {
-		return Conver.toInt(getParam(name), defaultValue);
-	}
-
-	/**
-	 * @param name 参数名
-	 * @param defaultValue 当客户端未传参的默认值
-	 * @return 获得long类型请求参数
-	 */
-	public Long getLongParam(String name, Long defaultValue) {
-		return Conver.toLong(getParam(name), defaultValue);
-	}
-
-	/**
-	 * @param name 参数名
-	 * @param defaultValue 当客户端未传参的默认值
-	 * @return 获得Double类型请求参数
-	 */
-	public Double getDoubleParam(String name, Double defaultValue) {
-		return Conver.toDouble(getParam(name), defaultValue);
-	}
-
-	/**
-	 * @param name 参数名
-	 * @param defaultValue 当客户端未传参的默认值
-	 * @return 获得Float类型请求参数
-	 */
-	public Float getFloatParam(String name, Float defaultValue) {
-		return Conver.toFloat(getParam(name), defaultValue);
-	}
-
-	/**
-	 * @param name 参数名
-	 * @param defaultValue 当客户端未传参的默认值
-	 * @return 获得Boolean类型请求参数
-	 */
-	public Boolean getBoolParam(String name, Boolean defaultValue) {
-		return Conver.toBool(getParam(name), defaultValue);
-	}
-
-	/**
-	 * 格式：<br>
-	 * 1、yyyy-MM-dd HH:mm:ss <br>
-	 * 2、yyyy-MM-dd <br>
-	 * 3、HH:mm:ss <br>
-	 * 
-	 * @param name 参数名
-	 * @param defaultValue 当客户端未传参的默认值
-	 * @return 获得Date类型请求参数，默认格式：
-	 */
-	public Date getDateParam(String name, Date defaultValue) {
-		String param = getParam(name);
-		return StrUtil.isBlank(param) ? defaultValue : DateUtil.parse(param);
-	}
-
-	/**
-	 * @param name 参数名
-	 * @param format 格式
-	 * @param defaultValue 当客户端未传参的默认值
-	 * @return 获得Date类型请求参数
-	 */
-	public Date getDateParam(String name, String format, Date defaultValue) {
-		String param = getParam(name);
-		return StrUtil.isBlank(param) ? defaultValue : DateUtil.parse(param, format);
-	}
-
-	/**
-	 * 获得请求参数<br>
-	 * 列表类型值，常用于表单中的多选框
-	 * 
-	 * @param name 参数名
-	 * @return 数组
-	 */
-	@SuppressWarnings("unchecked")
-	public List<String> getArrayParam(String name) {
-		Object value = params.get(name);
-		if(null == value){
-			return null;
-		}
-		
-		if(value instanceof List){
-			return (List<String>) value;
-		}else if(value instanceof String){
-			return StrUtil.split((String)value, ',');
-		}else{
-			throw new RuntimeException("Value is not a List type!");
-		}
+		return StringUtils.isNullOrEmpty(param) ? defaultValue : param;
 	}
 
 	/**
@@ -473,7 +371,7 @@ public class Request {
 
 		// Cookie
 		final String cookieString = this.headers.get(HttpHeaderNames.COOKIE);
-		if (StrUtil.isNotBlank(cookieString)) {
+		if (!StringUtils.isNullOrEmpty(cookieString)) {
 			final Set<Cookie> cookies = ServerCookieDecoder.LAX.decode(cookieString);
 			for (Cookie cookie : cookies) {
 				this.cookies.put(cookie.name(), cookie);
@@ -488,8 +386,8 @@ public class Request {
 	 */
 	protected void putIp(ChannelHandlerContext ctx) {
 		String ip = getHeader("X-Forwarded-For");
-		if (StrUtil.isNotBlank(ip)) {
-			ip = HttpUtil.getMultistageReverseProxyIp(ip);
+		if (StringUtils.isNullOrEmpty(ip)) {
+			ip = StringUtils.getMultistageReverseProxyIp(ip);
 		} else {
 			final InetSocketAddress insocket = (InetSocketAddress) ctx.channel().remoteAddress();
 			ip = insocket.getAddress().getHostAddress();

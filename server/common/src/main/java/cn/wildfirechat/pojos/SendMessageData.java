@@ -11,7 +11,8 @@ package cn.wildfirechat.pojos;
 import java.util.List;
 
 import cn.wildfirechat.proto.WFCMessage;
-import io.netty.util.internal.StringUtil;
+
+import com.playcrab.util.StringUtils;
 
 public class SendMessageData {
     private String sender;
@@ -65,8 +66,8 @@ public class SendMessageData {
             sendMessageData.getConv() == null ||
             sendMessageData.getConv().getType() < 0 ||
             sendMessageData.getConv().getType() > 8 ||
-            StringUtil.isNullOrEmpty(sendMessageData.getConv().getTarget()) ||
-            StringUtil.isNullOrEmpty(sendMessageData.getSender()) ||
+            StringUtils.isNullOrEmpty(sendMessageData.getConv().getTarget()) ||
+            StringUtils.isNullOrEmpty(sendMessageData.getSender()) ||
             sendMessageData.getPayload() == null) {
             return false;
         }

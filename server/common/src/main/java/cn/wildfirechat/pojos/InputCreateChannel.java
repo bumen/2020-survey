@@ -10,7 +10,8 @@ package cn.wildfirechat.pojos;
 
 
 import cn.wildfirechat.proto.WFCMessage;
-import io.netty.util.internal.StringUtil;
+
+import com.playcrab.util.StringUtils;
 
 public class InputCreateChannel {
     private String owner;
@@ -27,23 +28,23 @@ public class InputCreateChannel {
 
     public WFCMessage.ChannelInfo toProtoChannelInfo() {
         WFCMessage.ChannelInfo.Builder builder = WFCMessage.ChannelInfo.newBuilder().setOwner(owner);
-        if (!StringUtil.isNullOrEmpty(name))
+        if (!StringUtils.isNullOrEmpty(name))
             builder = builder.setName(name);
-        if (!StringUtil.isNullOrEmpty(targetId))
+        if (!StringUtils.isNullOrEmpty(targetId))
             builder = builder.setTargetId(targetId);
-        if (!StringUtil.isNullOrEmpty(callback))
+        if (!StringUtils.isNullOrEmpty(callback))
             builder = builder.setCallback(callback);
-        if (!StringUtil.isNullOrEmpty(portrait))
+        if (!StringUtils.isNullOrEmpty(portrait))
             builder = builder.setPortrait(portrait);
         builder = builder.setAutomatic(auto);
-        if (!StringUtil.isNullOrEmpty(secret))
+        if (!StringUtils.isNullOrEmpty(secret))
             builder = builder.setSecret(secret);
-        if (!StringUtil.isNullOrEmpty(desc))
+        if (!StringUtils.isNullOrEmpty(desc))
             builder = builder.setDesc(desc);
         builder = builder.setStatus(state);
-        if (!StringUtil.isNullOrEmpty(extra))
+        if (!StringUtils.isNullOrEmpty(extra))
             builder = builder.setExtra(extra);
-        if (!StringUtil.isNullOrEmpty(name))
+        if (!StringUtils.isNullOrEmpty(name))
             builder = builder.setUpdateDt(updateDt);
         else
             builder = builder.setUpdateDt(System.currentTimeMillis());

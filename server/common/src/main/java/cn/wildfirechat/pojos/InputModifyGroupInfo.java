@@ -9,11 +9,11 @@
 package cn.wildfirechat.pojos;
 
 
-import cn.wildfirechat.proto.WFCMessage;
-import io.netty.util.internal.StringUtil;
-
 import java.util.Arrays;
-import java.util.List;
+
+import cn.wildfirechat.proto.WFCMessage;
+
+import com.playcrab.util.StringUtils;
 
 public class InputModifyGroupInfo extends InputGroupBase {
     private String group_id;
@@ -22,7 +22,7 @@ public class InputModifyGroupInfo extends InputGroupBase {
     private String value;
 
     public boolean isValide() {
-        return !StringUtil.isNullOrEmpty(group_id);
+        return !StringUtils.isNullOrEmpty(group_id);
     }
     public String getGroup_id() {
         return group_id;

@@ -8,12 +8,11 @@
 
 package cn.wildfirechat.pojos;
 
-import cn.wildfirechat.proto.ProtoConstants;
-import cn.wildfirechat.proto.WFCMessage;
-import io.netty.util.internal.StringUtil;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import cn.wildfirechat.proto.ProtoConstants;
+import cn.wildfirechat.proto.WFCMessage;
 
 public class SendChannelMessageData {
     private List<String> targets;

@@ -9,9 +9,6 @@
 package cn.wildfirechat.pojos;
 
 
-import cn.wildfirechat.proto.WFCMessage;
-import io.netty.util.internal.StringUtil;
-
 public class InputGetFriendList {
     private String userId;
     private int status;

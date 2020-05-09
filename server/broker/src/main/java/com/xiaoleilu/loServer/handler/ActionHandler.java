@@ -10,7 +10,6 @@ import io.netty.handler.codec.http.FullHttpRequest;
 import org.slf4j.Logger;
 import win.liyufan.im.Utility;
 
-import com.xiaoleilu.hutool.lang.Singleton;
 import com.xiaoleilu.loServer.ServerSetting;
 import com.xiaoleilu.loServer.action.Action;
 import com.xiaoleilu.loServer.action.FileAction;
@@ -101,6 +100,8 @@ abstract public class ActionHandler extends SimpleChannelInboundHandler<FullHttp
 	}
 
 	abstract boolean isValidePath(String path);
+
+    private FileAction deafultAction = new FileAction();
 	/**
 	 * 执行Action
 	 * @param request 请求对象
@@ -128,7 +129,7 @@ abstract public class ActionHandler extends SimpleChannelInboundHandler<FullHttp
 			action = ServerSetting.getAction(ServerSetting.MAPPING_ALL, request.getMethod());
 			if(null == action){
 				// 非Action方法，调用静态文件读取
-				action = Singleton.get(FileAction.class);
+				action = deafultAction;
 			}
 		}
         action.ctx = ctx;

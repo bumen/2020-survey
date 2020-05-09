@@ -9,10 +9,11 @@
 package cn.wildfirechat.pojos;
 
 
-import cn.wildfirechat.proto.WFCMessage;
-import io.netty.util.internal.StringUtil;
-
 import java.util.List;
+
+import cn.wildfirechat.proto.WFCMessage;
+
+import com.playcrab.util.StringUtils;
 
 public class InputSetGroupManager extends InputGroupBase {
     private String group_id;
@@ -44,7 +45,7 @@ public class InputSetGroupManager extends InputGroupBase {
     }
 
     public boolean isValide() {
-        if (StringUtil.isNullOrEmpty(operator) || StringUtil.isNullOrEmpty(group_id) || members == null || members.isEmpty()) {
+        if (StringUtils.isNullOrEmpty(operator) || StringUtils.isNullOrEmpty(group_id) || members == null || members.isEmpty()) {
             return false;
         }
         return true;

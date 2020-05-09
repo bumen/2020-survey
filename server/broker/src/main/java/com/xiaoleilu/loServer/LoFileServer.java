@@ -15,7 +15,7 @@ import io.netty.handler.codec.http.HttpResponseEncoder;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import org.slf4j.LoggerFactory;
 
-import com.xiaoleilu.hutool.util.DateUtil;
+import com.playcrab.util.TimeUtils;
 import com.xiaoleilu.loServer.handler.HttpFileServerHandler;
 
 /**
@@ -70,7 +70,8 @@ public class LoFileServer {
                 });
 			
 			channel = b.bind(port).sync().channel();
-			Logger.info("***** Welcome To LoServer on port [{}], startting spend {}ms *****", port, DateUtil.spendMs(start));
+			Logger.info("***** Welcome To LoServer on port [{}], startting spend {}ms *****", port, TimeUtils
+                .spendMs(start));
 		} finally {
 
 		}

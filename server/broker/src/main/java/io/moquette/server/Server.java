@@ -124,7 +124,7 @@ public class Server {
 
     private LoServer httpServer;
 
-    public static void start(String[] args) throws IOException {
+    public static void start(String[] args) throws Exception {
         instance = new Server();
         final IConfig config = defaultConfig();
 
@@ -141,12 +141,8 @@ public class Server {
         AdminAction.setNoCheckTime(config.getProperty(HTTP_SERVER_API_NO_CHECK_TIME));
 
         instance.httpServer = new LoServer(httpLocalPort, httpAdminPort, instance.m_processor.getMessagesStore(), instance.m_store.sessionsStore());
-        try {
-            instance.httpServer.start();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            Utility.printExecption(LOG, e);
-        }
+
+        instance.httpServer.start();
 
         final PushServer pushServer = PushServer.getServer();
         pushServer.init(config, instance.getStore().sessionsStore());

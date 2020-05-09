@@ -2,10 +2,6 @@ package com.xiaoleilu.loServer.listener;
 
 import java.io.RandomAccessFile;
 
-import com.xiaoleilu.hutool.io.IoUtil;
-import com.xiaoleilu.hutool.log.Log;
-import com.xiaoleilu.hutool.log.StaticLog;
-
 import io.netty.channel.ChannelProgressiveFuture;
 import io.netty.channel.ChannelProgressiveFutureListener;
 import org.slf4j.LoggerFactory;
@@ -31,7 +27,13 @@ public class FileProgressiveFutureListener implements ChannelProgressiveFutureLi
 
 	@Override
 	public void operationComplete(ChannelProgressiveFuture future) {
-		IoUtil.close(raf);
+        if (raf != null) {
+            try {
+                raf.close();
+            } catch (Exception var2) {
+                //pass
+            }
+        }
         Logger.debug("Transfer complete.");
 	}
 

@@ -11,7 +11,8 @@ package cn.wildfirechat.pojos;
 
 import cn.wildfirechat.proto.ProtoConstants;
 import cn.wildfirechat.proto.WFCMessage;
-import io.netty.util.internal.StringUtil;
+
+import com.playcrab.util.StringUtils;
 
 public class InputCreateRobot {
     private String userId;
@@ -44,15 +45,15 @@ public class InputCreateRobot {
 
     public WFCMessage.Robot toRobot() {
         WFCMessage.Robot.Builder builder = WFCMessage.Robot.newBuilder();
-        if (!StringUtil.isNullOrEmpty(userId))
+        if (!StringUtils.isNullOrEmpty(userId))
             builder.setUid(userId);
-        if (!StringUtil.isNullOrEmpty(owner))
+        if (!StringUtils.isNullOrEmpty(owner))
         builder.setOwner(owner);
-        if (!StringUtil.isNullOrEmpty(secret))
+        if (!StringUtils.isNullOrEmpty(secret))
         builder.setSecret(secret);
-        if (!StringUtil.isNullOrEmpty(callback))
+        if (!StringUtils.isNullOrEmpty(callback))
         builder.setCallback(callback);
-        if (!StringUtil.isNullOrEmpty(robotExtra))
+        if (!StringUtils.isNullOrEmpty(robotExtra))
         builder.setExtra(robotExtra);
         builder.setState(0);
         return builder.build();

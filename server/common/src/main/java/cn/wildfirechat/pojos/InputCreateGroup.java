@@ -10,9 +10,8 @@ package cn.wildfirechat.pojos;
 
 
 import cn.wildfirechat.proto.WFCMessage;
-import io.netty.util.internal.StringUtil;
 
-import java.util.List;
+import com.playcrab.util.StringUtils;
 
 public class InputCreateGroup extends InputGroupBase {
     private PojoGroup group;
@@ -24,24 +23,24 @@ public class InputCreateGroup extends InputGroupBase {
     public WFCMessage.CreateGroupRequest toProtoGroupRequest() {
         WFCMessage.Group.Builder groupBuilder = WFCMessage.Group.newBuilder();
         WFCMessage.GroupInfo.Builder groupInfoBuilder = WFCMessage.GroupInfo.newBuilder();
-        if (!StringUtil.isNullOrEmpty(group.getGroup_info().target_id)) {
+        if (!StringUtils.isNullOrEmpty(group.getGroup_info().target_id)) {
             groupInfoBuilder.setTargetId(group.getGroup_info().getTarget_id());
         }
 
-        if (!StringUtil.isNullOrEmpty(group.getGroup_info().name)) {
+        if (!StringUtils.isNullOrEmpty(group.getGroup_info().name)) {
             groupInfoBuilder.setName(group.getGroup_info().getName());
         }
 
-        if (!StringUtil.isNullOrEmpty(group.getGroup_info().portrait)) {
+        if (!StringUtils.isNullOrEmpty(group.getGroup_info().portrait)) {
             groupInfoBuilder.setPortrait(group.getGroup_info().getPortrait());
         }
-        if (!StringUtil.isNullOrEmpty(group.getGroup_info().owner)) {
+        if (!StringUtils.isNullOrEmpty(group.getGroup_info().owner)) {
             groupInfoBuilder.setOwner(group.getGroup_info().getOwner());
         }
 
             groupInfoBuilder.setType(group.getGroup_info().getType());
 
-        if (!StringUtil.isNullOrEmpty(group.getGroup_info().extra)) {
+        if (!StringUtils.isNullOrEmpty(group.getGroup_info().extra)) {
             groupInfoBuilder.setExtra(group.getGroup_info().getExtra());
         }
 
@@ -49,7 +48,7 @@ public class InputCreateGroup extends InputGroupBase {
         groupBuilder.setGroupInfo(groupInfoBuilder);
         for (PojoGroupMember pojoGroupMember : group.getMembers()) {
             WFCMessage.GroupMember.Builder groupMemberBuilder = WFCMessage.GroupMember.newBuilder().setMemberId(pojoGroupMember.getMember_id());
-            if (!StringUtil.isNullOrEmpty(pojoGroupMember.getAlias())) {
+            if (!StringUtils.isNullOrEmpty(pojoGroupMember.getAlias())) {
                 groupMemberBuilder.setAlias(pojoGroupMember.getAlias());
             }
             groupMemberBuilder.setType(pojoGroupMember.getType());

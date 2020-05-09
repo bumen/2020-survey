@@ -10,9 +10,6 @@ package cn.wildfirechat.pojos;
 
 
 import cn.wildfirechat.proto.WFCMessage;
-import io.netty.util.internal.StringUtil;
-
-import java.util.List;
 
 public class InputDismissGroup extends InputGroupBase {
     private String group_id;

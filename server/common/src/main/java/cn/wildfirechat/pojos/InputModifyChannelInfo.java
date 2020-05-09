@@ -9,11 +9,6 @@
 package cn.wildfirechat.pojos;
 
 
-import cn.wildfirechat.proto.WFCMessage;
-import io.netty.util.internal.StringUtil;
-
-import java.util.Arrays;
-
 public class InputModifyChannelInfo {
     private int type;
     private String value;

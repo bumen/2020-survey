@@ -3,26 +3,18 @@ package com.xiaoleilu.loServer.action;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
+import java.nio.file.Paths;
 import java.util.regex.Pattern;
 
-import com.hazelcast.core.HazelcastInstance;
-import com.xiaoleilu.hutool.log.Log;
-import com.xiaoleilu.hutool.log.StaticLog;
-import com.xiaoleilu.hutool.util.DateUtil;
-import com.xiaoleilu.hutool.util.FileUtil;
-import com.xiaoleilu.hutool.util.ReUtil;
-import com.xiaoleilu.hutool.util.StrUtil;
-import com.xiaoleilu.loServer.ServerSetting;
-import com.xiaoleilu.loServer.handler.Request;
-import com.xiaoleilu.loServer.handler.Response;
-
-import io.moquette.spi.IMessagesStore;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.LoggerFactory;
+
+import com.playcrab.util.StringUtils;
+import com.playcrab.util.TimeUtils;
+import com.xiaoleilu.loServer.ServerSetting;
+import com.xiaoleilu.loServer.handler.Request;
+import com.xiaoleilu.loServer.handler.Response;
 
 /**
  * 默认的主页Action，当访问主页且没有定义主页Action时，调用此Action
@@ -63,16 +55,11 @@ public class FileAction extends Action {
 
         // Cache Validation
         String ifModifiedSince = request.getHeader(HttpHeaderNames.IF_MODIFIED_SINCE.toString());
-        if (StrUtil.isNotBlank(ifModifiedSince)) {
-            Date ifModifiedSinceDate = null;
-            try {
-                ifModifiedSinceDate = DateUtil.parse(ifModifiedSince, HTTP_DATE_FORMATER);
-            } catch (Exception e) {
-                Logger.warn("If-Modified-Since header parse error: {}", e.getMessage());
-            }
-            if(ifModifiedSinceDate != null) {
+        if (StringUtils.isNullOrEmpty(ifModifiedSince)) {
+            long ifModifiedSinceDate = TimeUtils.parseHttpDateTime(ifModifiedSince);
+            if(ifModifiedSinceDate > 0L) {
                 // 只对比到秒一级别
-                long ifModifiedSinceDateSeconds = ifModifiedSinceDate.getTime() / 1000;
+                long ifModifiedSinceDateSeconds = ifModifiedSinceDate / 1000;
                 long fileLastModifiedSeconds = file.lastModified() / 1000;
                 if (ifModifiedSinceDateSeconds == fileLastModifiedSeconds) {
                     Logger.debug("File {} not modified.", file.getPath());
@@ -87,7 +74,6 @@ public class FileAction extends Action {
     }
 
     private static final Pattern INSECURE_URI = Pattern.compile(".*[<>&\"].*");
-	private static final SimpleDateFormat HTTP_DATE_FORMATER = new SimpleDateFormat(DateUtil.HTTP_DATETIME_PATTERN, Locale.US);
 
 	
 	/**
@@ -109,11 +95,12 @@ public class FileAction extends Action {
 		}
 
 		// 路径安全检查
-		if (httpPath.contains("/.") || httpPath.contains("./") || httpPath.charAt(0) == '.' || httpPath.charAt(httpPath.length() - 1) == '.' || ReUtil.isMatch(INSECURE_URI, httpPath)) {
+		if (httpPath.contains("/.") || httpPath.contains("./") || httpPath.charAt(0) == '.' || httpPath.charAt(httpPath.length() - 1) == '.' || StringUtils
+            .isMatch(INSECURE_URI, httpPath)) {
 			return null;
 		}
 
 		// 转换为绝对路径
-		return FileUtil.file(ServerSetting.getRoot(), httpPath);
+		return Paths.get(ServerSetting.getRoot().getPath(), httpPath).toFile();
 	}
 }

@@ -8,11 +8,11 @@
 
 package cn.wildfirechat.pojos;
 
-import cn.wildfirechat.proto.ProtoConstants;
-import cn.wildfirechat.proto.WFCMessage;
-import io.netty.util.internal.StringUtil;
-
 import java.util.List;
+
+import cn.wildfirechat.proto.WFCMessage;
+
+import com.playcrab.util.StringUtils;
 
 public class MulticastMessageData {
     private String sender;
@@ -46,7 +46,7 @@ public class MulticastMessageData {
 
     public static boolean isValide(MulticastMessageData sendMessageData) {
         if(sendMessageData == null ||
-            StringUtil.isNullOrEmpty(sendMessageData.getSender()) ||
+            StringUtils.isNullOrEmpty(sendMessageData.getSender()) ||
             sendMessageData.getPayload() == null) {
             return false;
         }

@@ -3,9 +3,9 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>wildfirechat-parent</artifactId>
-        <groupId>cn.wildfirechat</groupId>
-        <version>0.39</version>
+        <artifactId>im-parent</artifactId>
+        <groupId>com.playcrab</groupId>
+        <version>0.0.1-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -77,9 +77,9 @@
         </dependency>
 
         <dependency>
-            <groupId>cn.wildfirechat</groupId>
+            <groupId>com.playcrab</groupId>
             <artifactId>common</artifactId>
-            <version>${project.version}</version>
+            <version>0.0.1-SNAPSHOT</version>
         </dependency>
     </dependencies>
 

@@ -10,7 +10,6 @@ package cn.wildfirechat.pojos;
 
 
 import cn.wildfirechat.proto.WFCMessage;
-import io.netty.util.internal.StringUtil;
 
 public class OutputGetChatroomInfo {
     private String chatroomId;

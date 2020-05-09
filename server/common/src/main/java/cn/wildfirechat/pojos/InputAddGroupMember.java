@@ -9,10 +9,11 @@
 package cn.wildfirechat.pojos;
 
 
-import cn.wildfirechat.proto.WFCMessage;
-import io.netty.util.internal.StringUtil;
-
 import java.util.List;
+
+import cn.wildfirechat.proto.WFCMessage;
+
+import com.playcrab.util.StringUtils;
 
 public class InputAddGroupMember extends InputGroupBase {
     private String group_id;
@@ -43,7 +44,7 @@ public class InputAddGroupMember extends InputGroupBase {
         addGroupBuilder.setGroupId(group_id);
         for (PojoGroupMember pojoGroupMember : getMembers()) {
             WFCMessage.GroupMember.Builder groupMemberBuilder = WFCMessage.GroupMember.newBuilder().setMemberId(pojoGroupMember.getMember_id());
-            if (!StringUtil.isNullOrEmpty(pojoGroupMember.getAlias())) {
+            if (!StringUtils.isNullOrEmpty(pojoGroupMember.getAlias())) {
                 groupMemberBuilder.setAlias(pojoGroupMember.getAlias());
             }
             groupMemberBuilder.setType(pojoGroupMember.getType());

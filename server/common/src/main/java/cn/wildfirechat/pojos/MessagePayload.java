@@ -8,13 +8,14 @@
 
 package cn.wildfirechat.pojos;
 
-import cn.wildfirechat.proto.WFCMessage;
-import com.google.protobuf.ByteString;
-import io.netty.util.internal.StringUtil;
-
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+
+import cn.wildfirechat.proto.WFCMessage;
+
+import com.google.protobuf.ByteString;
+import com.playcrab.util.StringUtils;
 
 public class MessagePayload {
     private int type;
@@ -125,15 +126,15 @@ public class MessagePayload {
             .setExpireDuration(expireDuration)
             .setMentionedType(mentionedType);
 
-        if (!StringUtil.isNullOrEmpty(searchableContent))
+        if (!StringUtils.isNullOrEmpty(searchableContent))
             builder.setSearchableContent(searchableContent);
-        if (!StringUtil.isNullOrEmpty(pushContent))
+        if (!StringUtils.isNullOrEmpty(pushContent))
             builder.setPushContent(pushContent);
-        if (!StringUtil.isNullOrEmpty(content))
+        if (!StringUtils.isNullOrEmpty(content))
             builder.setContent(content);
-        if (!StringUtil.isNullOrEmpty(base64edData))
+        if (!StringUtils.isNullOrEmpty(base64edData))
             builder.setData(ByteString.copyFrom(Base64.getDecoder().decode(base64edData)));
-        if (!StringUtil.isNullOrEmpty(remoteMediaUrl))
+        if (!StringUtils.isNullOrEmpty(remoteMediaUrl))
             builder.setRemoteMediaUrl(remoteMediaUrl);
         if (mentionedTarget != null && mentionedTarget.size() > 0)
             builder.addAllMentionedTarget(mentionedTarget);

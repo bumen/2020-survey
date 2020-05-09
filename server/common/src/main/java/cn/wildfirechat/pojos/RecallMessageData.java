@@ -8,9 +8,6 @@
 
 package cn.wildfirechat.pojos;
 
-import cn.wildfirechat.proto.WFCMessage;
-import io.netty.util.internal.StringUtil;
-
 public class RecallMessageData {
     private String operator;
     private long messageUid;

@@ -10,7 +10,8 @@ package cn.wildfirechat.pojos;
 
 
 import cn.wildfirechat.proto.WFCMessage;
-import io.netty.util.internal.StringUtil;
+
+import com.playcrab.util.StringUtils;
 
 public class InputCreateUnion extends InputGroupBase {
     private PojoUnionInfo union;
@@ -22,18 +23,18 @@ public class InputCreateUnion extends InputGroupBase {
     public WFCMessage.CreateGroupRequest toProtoGroupRequest() {
         WFCMessage.Group.Builder groupBuilder = WFCMessage.Group.newBuilder();
         WFCMessage.GroupInfo.Builder groupInfoBuilder = WFCMessage.GroupInfo.newBuilder();
-        if (!StringUtil.isNullOrEmpty(union.unionId)) {
+        if (!StringUtils.isNullOrEmpty(union.unionId)) {
             groupInfoBuilder.setTargetId(union.unionId);
         }
 
-        if (!StringUtil.isNullOrEmpty(union.name)) {
+        if (!StringUtils.isNullOrEmpty(union.name)) {
             groupInfoBuilder.setName(union.getName());
         }
 
-        if (!StringUtil.isNullOrEmpty(union.portrait)) {
+        if (!StringUtils.isNullOrEmpty(union.portrait)) {
             groupInfoBuilder.setPortrait(union.getPortrait());
         }
-        if (!StringUtil.isNullOrEmpty(union.owner)) {
+        if (!StringUtils.isNullOrEmpty(union.owner)) {
             groupInfoBuilder.setOwner(union.getOwner());
         }
 

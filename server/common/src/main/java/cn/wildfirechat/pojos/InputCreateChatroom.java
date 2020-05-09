@@ -11,7 +11,8 @@ package cn.wildfirechat.pojos;
 
 import cn.wildfirechat.proto.ProtoConstants;
 import cn.wildfirechat.proto.WFCMessage;
-import io.netty.util.internal.StringUtil;
+
+import com.playcrab.util.StringUtils;
 
 public class InputCreateChatroom {
     private String chatroomId;
@@ -23,18 +24,18 @@ public class InputCreateChatroom {
 
     public WFCMessage.ChatroomInfo toChatroomInfo() {
         WFCMessage.ChatroomInfo.Builder builder = WFCMessage.ChatroomInfo.newBuilder().setTitle(title);
-        if (!StringUtil.isNullOrEmpty(desc)) {
+        if (!StringUtils.isNullOrEmpty(desc)) {
             builder.setDesc(desc);
         }
 
-        if (!StringUtil.isNullOrEmpty(portrait)) {
+        if (!StringUtils.isNullOrEmpty(portrait)) {
             builder.setPortrait(portrait);
         }
 
         long current = System.currentTimeMillis();
         builder.setCreateDt(current).setUpdateDt(current).setMemberCount(0);
 
-        if (!StringUtil.isNullOrEmpty(extra)) {
+        if (!StringUtils.isNullOrEmpty(extra)) {
             builder.setExtra(extra);
         }
 

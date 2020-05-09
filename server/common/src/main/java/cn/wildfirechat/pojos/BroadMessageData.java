@@ -10,7 +10,8 @@ package cn.wildfirechat.pojos;
 
 import cn.wildfirechat.proto.ProtoConstants;
 import cn.wildfirechat.proto.WFCMessage;
-import io.netty.util.internal.StringUtil;
+
+import com.playcrab.util.StringUtils;
 
 public class BroadMessageData {
     private String sender;
@@ -43,7 +44,7 @@ public class BroadMessageData {
 
     public static boolean isValide(BroadMessageData sendMessageData) {
         if(sendMessageData == null ||
-            StringUtil.isNullOrEmpty(sendMessageData.getSender()) ||
+            StringUtils.isNullOrEmpty(sendMessageData.getSender()) ||
             sendMessageData.getPayload() == null) {
             return false;
         }

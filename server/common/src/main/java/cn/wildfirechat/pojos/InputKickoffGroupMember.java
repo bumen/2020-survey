@@ -9,10 +9,9 @@
 package cn.wildfirechat.pojos;
 
 
-import cn.wildfirechat.proto.WFCMessage;
-import io.netty.util.internal.StringUtil;
-
 import java.util.List;
+
+import cn.wildfirechat.proto.WFCMessage;
 
 public class InputKickoffGroupMember extends InputGroupBase {
     private String group_id;

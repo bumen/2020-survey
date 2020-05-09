@@ -21,7 +21,7 @@ import io.netty.util.concurrent.DefaultThreadFactory;
 import io.netty.util.concurrent.Future;
 import win.liyufan.im.Utility;
 
-import com.xiaoleilu.hutool.util.DateUtil;
+import com.playcrab.util.TimeUtils;
 import com.xiaoleilu.loServer.action.Action;
 import com.xiaoleilu.loServer.action.ClassUtil;
 import com.xiaoleilu.loServer.annotation.Route;
@@ -114,7 +114,8 @@ public class LoServer {
                 });
 
             adminChannel = adminB.bind(adminPort).sync().channel();
-			Logger.info("***** Welcome To LoServer on port [{},{}], startting spend {}ms *****", port, adminPort, DateUtil.spendMs(start));
+			Logger.info("***** Welcome To LoServer on port [{},{}], startting spend {}ms *****", port, adminPort, TimeUtils
+                .spendMs(start));
 		} finally {
 
 		}
@@ -153,7 +154,7 @@ public class LoServer {
 
     private void registerAllAction() {
         try {
-            for (Class cls:ClassUtil.getAllAssignedClass(Action.class)
+            for (Class cls: ClassUtil.getAllAssignedClass(Action.class)
                  ) {
                 if(cls.getAnnotation(Route.class) != null) {
                     ServerSetting.setAction((Class<? extends Action>)cls);

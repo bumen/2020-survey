@@ -3,25 +3,15 @@ package com.xiaoleilu.loServer.handler;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.net.URLConnection;
 import java.nio.charset.Charset;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.TimeZone;
 
-import com.xiaoleilu.hutool.http.HttpUtil;
-import com.xiaoleilu.hutool.log.Log;
-import com.xiaoleilu.hutool.log.StaticLog;
-import com.xiaoleilu.hutool.util.CharsetUtil;
-import com.xiaoleilu.hutool.util.DateUtil;
-import com.xiaoleilu.hutool.util.StrUtil;
-import com.xiaoleilu.loServer.ServerSetting;
-import com.xiaoleilu.loServer.listener.FileProgressiveFutureListener;
-
+import cn.wildfirechat.log.Logs;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
@@ -41,7 +31,11 @@ import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.codec.http.cookie.Cookie;
 import io.netty.handler.codec.http.cookie.DefaultCookie;
 import io.netty.handler.codec.http.cookie.ServerCookieEncoder;
-import org.slf4j.LoggerFactory;
+
+import com.playcrab.util.StringUtils;
+import com.playcrab.util.TimeUtils;
+import com.xiaoleilu.loServer.ServerSetting;
+import com.xiaoleilu.loServer.listener.FileProgressiveFutureListener;
 
 /**
  * 响应对象
@@ -50,7 +44,7 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class Response {
-    private static final org.slf4j.Logger Logger = LoggerFactory.getLogger(Response.class);
+    private static final org.slf4j.Logger Logger = Logs.HTTP;
 
 	/** 返回内容类型：普通文本 */
 	public final static String CONTENT_TYPE_TEXT = "text/plain";
@@ -331,19 +325,17 @@ public class Response {
 	 * @param httpCacheSeconds 缓存时间，单位秒
 	 */
 	public void setDateAndCache(long lastModify, int httpCacheSeconds) {
-		SimpleDateFormat formatter = new SimpleDateFormat(DateUtil.HTTP_DATETIME_PATTERN, Locale.US);
-		formatter.setTimeZone(TimeZone.getTimeZone("GMT"));
 
 		// Date header
 		Calendar time = new GregorianCalendar();
-		setHeader(HttpHeaderNames.DATE.toString(), formatter.format(time.getTime()));
+		setHeader(HttpHeaderNames.DATE.toString(), TimeUtils.formatHttpDateTime(time.getTimeInMillis()));
 
 		// Add cache headers
 		time.add(Calendar.SECOND, httpCacheSeconds);
 
-		setHeader(HttpHeaderNames.EXPIRES.toString(), formatter.format(time.getTime()));
+		setHeader(HttpHeaderNames.EXPIRES.toString(), TimeUtils.formatHttpDateTime(time.getTimeInMillis()));
 		setHeader(HttpHeaderNames.CACHE_CONTROL.toString(), "private, max-age=" + httpCacheSeconds);
-		setHeader(HttpHeaderNames.LAST_MODIFIED.toString(), formatter.format(DateUtil.date(lastModify)));
+		setHeader(HttpHeaderNames.LAST_MODIFIED.toString(), TimeUtils.formatHttpDateTime(lastModify));
 	}
 
 	// -------------------------------------------------------------------------------------- build HttpResponse start
@@ -382,7 +374,7 @@ public class Response {
 		if ("application/octet-stream".equals(contentType)) {
             httpHeaders.set(HttpHeaderNames.CONTENT_TYPE.toString(), contentType);
         } else {
-            httpHeaders.set(HttpHeaderNames.CONTENT_TYPE.toString(), StrUtil.format("{};charset={}", contentType, charset));
+            httpHeaders.set(HttpHeaderNames.CONTENT_TYPE.toString(), String.format("%s;charset=%s", contentType, charset));
             httpHeaders.set(HttpHeaderNames.CONTENT_ENCODING.toString(), charset);
         }
 
@@ -412,7 +404,7 @@ public class Response {
 			try {
 				channelFuture = sendFile(file);
 			} catch (IOException e) {
-                Logger.error(StrUtil.format("Send {} error!", file), e.toString());
+                Logger.error("Send {} error!", file.getName(), e);
 				channelFuture = sendError(HttpResponseStatus.FORBIDDEN, "");
 			}
 		}else{
@@ -469,8 +461,8 @@ public class Response {
 		this.setContentLength(fileLength);
 		
 		//文件类型
-		String contentType = HttpUtil.getMimeType(file.getName());
-		if(StrUtil.isBlank(contentType)){
+		String contentType = URLConnection.getFileNameMap().getContentTypeFor(file.getName());
+		if(StringUtils.isNullOrEmpty(contentType)){
 			//无法识别默认使用数据流
 			contentType = "application/octet-stream";
 		}
@@ -515,7 +507,8 @@ public class Response {
 	 * @return ChannelFuture
 	 */
 	public ChannelFuture sendNotModified() {
-		return this.setStatus(HttpResponseStatus.NOT_MODIFIED).setHeader(HttpHeaderNames.DATE.toString(), DateUtil.formatHttpDate(DateUtil.date())).send();
+		return this.setStatus(HttpResponseStatus.NOT_MODIFIED).setHeader(HttpHeaderNames.DATE.toString(), TimeUtils
+            .formatHttpDateTime(0L)).send();
 	}
 
 	/**
@@ -561,7 +554,6 @@ public class Response {
 		for ( Entry<String, String> entry : headers.entries()) {
 			sb.append("    ").append(entry.getKey()).append(": ").append(entry.getValue()).append("\r\n");
 		}
-		sb.append("content: ").append(StrUtil.str(content, CharsetUtil.UTF_8));
 
 		return sb.toString();
 	}
